@@ -2,6 +2,10 @@
 
 This repository is the canonical copy of the paper recommendation skills.
 
+Upstream acknowledgement:
+
+- This skill set is derived from [huangkiki/dailypaper-skills](https://github.com/huangkiki/dailypaper-skills), with local adaptations for this workflow and vault setup.
+
 Tracked skill folders:
 
 - `skills/_shared`
