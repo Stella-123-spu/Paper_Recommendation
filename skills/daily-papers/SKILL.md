@@ -9,8 +9,6 @@ description: |
 
 # 每日论文推荐
 
-> 来源说明：这套 daily papers workflow 基于 [huangkiki/dailypaper-skills](https://github.com/huangkiki/dailypaper-skills) 演化，并在当前本地工作流上做了定制。
-
 这是面向用户的一句话入口。对用户来说，正常只需要说一次：
 
 - `今日论文推荐`
