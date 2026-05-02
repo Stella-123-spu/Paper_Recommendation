@@ -1,0 +1,57 @@
+{
+  "paths": {
+    "obsidian_vault": "/Users/zengsh_agent/Obsidian/zengsh's Obsidian",
+    "paper_notes_folder": "PaperNotes",
+    "daily_papers_folder": "DailyPapers",
+    "concepts_folder": "_concepts"
+  },
+  "daily_papers": {
+    "keywords": [
+	"AI for healthcare",
+	"Patient trajectory modeling",
+	"Longitudinal EHR modeling",
+	"Large language models",
+	"Clinical LLM",
+	"EHR foundation model",
+	"Agentic RL",
+	"Medical world model",
+	"trajectory analysis",
+	"electronic health record",
+	"temporal reasoning"
+    ],
+    "negative_keywords": [
+	"weather forecast",
+	"climate",
+	"pet restoration",
+	"audio generation",
+	"music generation",
+	"speech synthesis",
+	"text-to-speech",
+	"speech recognition",
+	"voice cloning",
+	"trading",
+	"financial"
+    ],
+    "domain_boost_keywords": [
+	"Medical",
+	"Trajectory",
+	"EHR",
+	"Progression",
+	"Foundation model",
+	"multi-agent",
+	"reinforcement learning",
+	"World model",
+	"Multimodal",
+	"Causal",
+	"Intervention"
+    ],
+    "arxiv_categories": ["cs.CL", "cs.MA", "cs.AI", "cs.GR"],
+    "min_score": 2,
+    "top_n": 30
+  },
+  "automation": {
+    "auto_refresh_indexes": true,
+    "git_commit": false,
+    "git_push": false
+  }
+}
