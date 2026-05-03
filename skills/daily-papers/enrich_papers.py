@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 """Batch-enrich daily papers with metadata from source-specific pages.
 
 Usage:

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 """
 fetch_and_score.py — Phase 1+2: Fetch, score, merge, dedup, select top papers.
 
