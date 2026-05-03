@@ -47,8 +47,11 @@ This is the shortest path for a non-technical researcher.
    - your folder names for daily papers, notes, and concepts
 7. In Codex, run one of:
    - `今日论文推荐`
+   - `today's paper recommendations`
    - `过去3天论文推荐`
+   - `paper recommendations from the last 3 days`
    - `过去一周论文推荐`
+   - `paper recommendations from the last week`
 8. Open Obsidian and check the outputs:
    - daily recommendation note
    - paper notes
