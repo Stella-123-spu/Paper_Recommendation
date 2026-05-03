@@ -25,6 +25,99 @@ Built for people who want more than a paper dump, the workflow emphasizes **topi
 - Obsidian-native outputs for daily reviews, concept notes, and paper notes
 - Shared-config architecture with domain tuning in one file
 
+## Adapting to Another Research Domain
+
+This repository ships with a strong `Healthcare AI` preset, but the core system is reusable for other research areas.
+
+If you work in another domain, treat this repo as:
+
+- reusable pipeline infrastructure
+- a domain-specific config preset that you should replace
+- a set of review and note-writing behaviors that should be retuned to your literature
+
+### Fastest Path
+
+The fastest way to adapt this project is to use an AI coding assistant such as **Codex** or **Claude Code** to rewrite `skills/_shared/user-config.json` for your field.
+
+Do not feel like you need to hand-edit every keyword and taxonomy entry from scratch.
+
+A good workflow is:
+
+1. Open `skills/_shared/user-config.json`.
+2. Tell Codex or Claude Code your research domain.
+3. Ask it to rewrite the domain, keyword, exclusion, and taxonomy sections for that field.
+4. Review the result and then test with a 1-day and 3-day run.
+
+Example prompt:
+
+> Adapt this repository from Healthcare AI to computational neuroscience. Update `skills/_shared/user-config.json` so the domain summary, focus themes, related themes, out-of-scope examples, ranking keywords, negative keywords, domain boost keywords, arXiv categories, and paper note taxonomy all match that field. Keep the pipeline structure unchanged.
+
+### What You Should Change First
+
+Start with `skills/_shared/user-config.json`. That is the main adaptation surface.
+
+Update at least these sections:
+
+- `domain.name`
+- `domain.summary`
+- `domain.focus_themes`
+- `domain.related_themes`
+- `domain.out_of_scope_examples`
+- `domain.borderline_include_examples`
+- `daily_papers.keywords`
+- `daily_papers.negative_keywords`
+- `daily_papers.domain_boost_keywords`
+- `daily_papers.arxiv_categories`
+- `paper_notes_taxonomy.categories`
+
+In practice:
+
+- Replace the healthcare description with your own field definition
+- Rewrite the ranking keywords around your actual research vocabulary
+- Add negative keywords for adjacent areas you do not want flooding results
+- Change arXiv categories to match your field
+- Rewrite the note taxonomy so generated notes land in sensible folders
+
+### What You Usually Do Not Need to Rewrite
+
+Most of the machinery is domain-agnostic:
+
+- multi-source fetching
+- rolling time windows
+- deduplication across sources
+- history tracking
+- metadata enrichment
+- Obsidian output flow
+
+That means the first pass should be configuration-heavy, not code-heavy.
+
+### Recommended Adaptation Workflow
+
+1. Duplicate the current `user-config.json` and rewrite it for your field.
+2. Narrow `daily_papers.keywords` to terms that real papers in your area actually use.
+3. Expand `negative_keywords` aggressively so near-neighbor noise does not dominate.
+4. Adjust `arxiv_categories` and decide whether your field depends more on arXiv, PubMed, or preprints.
+5. Rewrite the `paper_notes_taxonomy` so note placement matches how you think about the field.
+6. Run a 1-day test and inspect the top results.
+7. Run a 3-day or 7-day test and look for drift, repetition, and irrelevant clusters.
+8. Tighten the config again before trusting the pipeline for daily use.
+
+### How to Know Your Adaptation Is Working
+
+Your config is in good shape when:
+
+- the top recommendations mostly belong to your real research area
+- obvious off-topic papers are filtered out early
+- the review stage uses language and comparisons that fit your field
+- concept notes and paper notes fall into folders that make sense
+- a 3-day or 7-day run still feels coherent instead of noisy
+
+### Common Mistake
+
+Do not only change `domain.name` and `domain.summary`.
+
+If you leave the healthcare keywords, taxonomy, and exclusion lists in place, the pipeline will still behave like a healthcare-focused recommender even if the title says otherwise.
+
 ## Quick Start
 
 1. Point the shared config at your local vault and folders in `skills/_shared/user-config.json`.
