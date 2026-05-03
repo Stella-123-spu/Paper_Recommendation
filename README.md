@@ -76,7 +76,32 @@ This project writes outputs into **Obsidian**, so you should have:
 
 You do not need to build the whole folder structure by hand before starting. The key thing is knowing where your vault lives on disk.
 
-### 4. Ask Codex to Set Up the Config for You
+### 4. Install the Skills into Codex and Keep Them Synced
+
+For Codex to use these skills directly, the skill folders need to exist under:
+
+- `~/.codex/skills/`
+
+The best setup is to create **symbolic links** from the folders in this repository into your Codex skills folder so they stay synced all the time.
+
+That way:
+
+- when you edit the files in this repository, Codex sees the changes immediately
+- when Codex updates the linked skill files, the changes are still reflected in this repository
+- you do not have to manually copy files back and forth
+
+At minimum, the linked skill folders should include:
+
+- `skills/_shared`
+- `skills/daily-papers`
+- `skills/daily-papers-fetch`
+- `skills/daily-papers-review`
+- `skills/daily-papers-notes`
+- `skills/paper-reader`
+
+If you are not comfortable creating symbolic links yourself, ask Codex to help you set them up from this repository into `~/.codex/skills/`.
+
+### 5. Ask Codex to Set Up the Config for You
 
 The most important setup file is:
 
@@ -94,7 +119,7 @@ Example prompt you can paste into Codex:
 
 If your field is different, replace `computational neuroscience` and the vault path with your own information.
 
-### 5. Check the Config Before Running Anything
+### 6. Check the Config Before Running Anything
 
 Before you run the pipeline, quickly confirm that `user-config.json` matches your real setup:
 
@@ -104,7 +129,7 @@ Before you run the pipeline, quickly confirm that `user-config.json` matches you
 - the keywords match the papers you want
 - the negative keywords block the noise you do not want
 
-### 6. Run Your First Recommendation
+### 7. Run Your First Recommendation
 
 In Codex, try one of these prompts:
 
@@ -114,7 +139,7 @@ In Codex, try one of these prompts:
 
 For a first test, `过去3天论文推荐` is often a good starting point because it gives the system a slightly larger pool than a single-day run.
 
-### 7. Open Obsidian and Inspect the Output
+### 8. Open Obsidian and Inspect the Output
 
 After the run finishes, open your Obsidian vault and look for:
 
@@ -125,7 +150,7 @@ After the run finishes, open your Obsidian vault and look for:
 
 If the results are off-topic, go back to `user-config.json` and ask Codex to tighten the keywords, exclusions, categories, or taxonomy.
 
-### 8. Tune Once, Then Use Daily
+### 9. Tune Once, Then Use Daily
 
 Treat your first run as calibration.
 
