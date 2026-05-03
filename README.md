@@ -23,6 +23,7 @@ Core idea: one prompt triggers a full paper pipeline:
 - [Sources](#sources)
 - [Configuration](#configuration)
 - [Repo Layout](#repo-layout)
+- [Roadmap](#roadmap)
 - [Notes](#notes)
 
 ## Quick Start
@@ -201,6 +202,12 @@ Key files:
 - `skills/daily-papers/fetch_and_score.py`
 - `skills/daily-papers/enrich_papers.py`
 - `skills/daily-papers-review/update_history.py`
+
+## Roadmap
+
+- [ ] Add a full English version
+- [ ] Add a GUI to make the workflow more user friendly
+- [ ] Learn from user interactions over time
 
 ## Notes
 
