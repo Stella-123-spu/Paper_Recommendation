@@ -29,7 +29,7 @@ WHERE ia.parentItemID = {item_id} AND ia.contentType = 'application/pdf';
 
 ```python
 def get_collection_path(collection_id):
-    """返回完整路径如 '3-Robotics/1-VLX/VLA'"""
+    """返回完整路径如 '一级分类/二级分类/主题名'"""
     cursor.execute("SELECT collectionID, collectionName, parentCollectionID FROM collections")
     collections = {row[0]: {'name': row[1], 'parent': row[2]} for row in cursor.fetchall()}
     path_parts = []
@@ -45,7 +45,7 @@ def get_collection_path(collection_id):
 
 ## 智能分类判断
 
-**不要依赖关键词匹配！** 必须理解论文核心贡献后判断。
+**不要依赖关键词匹配！** 必须理解论文核心贡献后判断。共享配置里的 taxonomy 只是候选目录和优先级来源，不是替代理解论文。
 
 ### 判断流程
 
@@ -58,9 +58,9 @@ def get_collection_path(collection_id):
 
 | 论文 | 错误分类 | 正确分类 | 理由 |
 |------|----------|----------|------|
-| 用 Flow Matching 做 VLA | Flow Matching | VLA | 核心是机器人策略 |
-| 用 3DGS 做 SLAM | 3DGS | SLAM | 目标是定位建图 |
-| DepthAnything | Deep Learning | Depth Estimation | 具体任务 |
+| 用通用技术解决明确任务 | 技术名 | 任务主线 | 核心贡献在任务本身 |
+| 综述 / benchmark | 某个方法分支 | Survey / Benchmark | 类型比技术栈更关键 |
+| 跨学科论文 | 次要组件 | 主要应用场景 | 找论文的人会先去主场景目录 |
 
 ## Zotero 分类操作
 
@@ -68,7 +68,7 @@ def get_collection_path(collection_id):
 # 查看论文当前分类
 python3 assets/zotero_helper.py info {item_id}
 # 查找目标分类 ID
-python3 assets/zotero_helper.py find-collection "VLA"
+python3 assets/zotero_helper.py find-collection "目标主题名"
 # 移动论文
 python3 assets/zotero_helper.py move {item_id} {new_collection_id} --from {old_collection_id}
 # 添加到多个分类

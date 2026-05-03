@@ -16,12 +16,15 @@ description: |
 
 ## Step 0: 读取共享配置
 
-先读取 `../_shared/user-config.json`，如果 `../_shared/user-config.local.json` 存在，再用它覆盖默认值。
+先读取唯一共享配置 `../_shared/user-config.json`。不要再查找或假设第二个 override 配置文件。
 
 显式生成并在后续统一使用这些变量：
 
 - `VAULT_PATH`
 - `DAILY_PAPERS_PATH`
+- `DOMAIN_NAME`
+- `DOMAIN_SUMMARY`
+- `DOMAIN_FOCUS_THEMES`
 - `KEYWORDS`
 - `NEGATIVE_KEYWORDS`
 - `DOMAIN_BOOST_KEYWORDS`
@@ -32,6 +35,7 @@ description: |
 其中：
 
 - `DAILY_PAPERS_PATH = {VAULT_PATH}/{daily_papers_folder}`
+- `DOMAIN_NAME / DOMAIN_SUMMARY / DOMAIN_FOCUS_THEMES` 来自共享配置的 `domain` 段
 - 所有关键词、分类、阈值都以共享配置为准
 - 不要额外叠加过时的默认领域偏好；主题以共享配置中的当前研究方向为准
 
@@ -49,15 +53,15 @@ description: |
 
 ## 配置来源
 
-- 默认配置在 `../_shared/user-config.json`
-- 个人覆盖配置放在 `../_shared/user-config.local.json`
-- 如果两者都存在，以 `local` 为准
+- 唯一配置文件：`../_shared/user-config.json`
+- 如果需要切换领域、关键词、主题或路径，只改这一个文件
+- 不要在 skill 文本、脚本参数或临时提示词里再维护第二套关键词表
 
 ## 工作流程
 
 ### Phase 1+2: 抓取 + 打分 + 合并去重（纯 Python 脚本）
 
-用 `fetch_and_score.py` 一步完成 HF + arXiv 抓取、打分、合并去重、历史去重、选 Top 30。**零 token 消耗。**
+用 `fetch_and_score.py` 一步完成 HF + arXiv 抓取、打分、合并去重、历史去重、按配置选 Top N。**零 token 消耗。**
 
 ```bash
 # 默认：当天
@@ -75,7 +79,7 @@ python3 ../daily-papers/fetch_and_score.py --days N > /tmp/daily_papers_top30.js
 - 按 arXiv ID 合并去重
 - 读取 `.history.json` 跨天去重（含周末模式放宽规则）
 - 不足 20 篇时从历史回填
-- 按 score 降序取 Top 30
+- 按共享配置中的 `top_n` 降序选取结果
 
 进度日志输出到 stderr，JSON 结果输出到 stdout。
 

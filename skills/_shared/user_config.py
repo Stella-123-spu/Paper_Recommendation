@@ -1,96 +1,19 @@
 #!/usr/bin/env python3
 
-import copy
 import json
 from functools import lru_cache
 from pathlib import Path
 
-
-DEFAULT_CONFIG = {
-    "paths": {
-        "obsidian_vault": "~/ObsidianVault",
-        "paper_notes_folder": "论文笔记",
-        "daily_papers_folder": "DailyPapers",
-        "concepts_folder": "_概念",
-        "zotero_db": "~/Zotero/zotero.sqlite",
-        "zotero_storage": "~/Zotero/storage",
-    },
-    "daily_papers": {
-        "keywords": [
-            "AI for healthcare",
-            "Patient trajectory modeling",
-            "Longitudinal EHR modeling",
-            "Large language models",
-            "Clinical LLM",
-            "EHR foundation model",
-            "Agentic RL",
-            "Medical world model",
-            "trajectory analysis",
-            "electronic health record",
-            "temporal reasoning",
-        ],
-        "negative_keywords": [
-            "weather forecast",
-            "climate",
-            "pet restoration",
-            "audio generation",
-            "music generation",
-            "speech synthesis",
-            "text-to-speech",
-            "speech recognition",
-            "voice cloning",
-            "trading",
-            "financial",
-        ],
-        "domain_boost_keywords": [
-            "Medical",
-            "Trajectory",
-            "EHR",
-            "Progression",
-            "Foundation model",
-            "multi-agent",
-            "reinforcement learning",
-            "World model",
-            "Multimodal",
-            "Causal",
-            "Intervention",
-        ],
-        "arxiv_categories": ["cs.CL", "cs.MA", "cs.AI", "cs.GR"],
-        "min_score": 2,
-        "top_n": 30,
-    },
-    "automation": {
-        "auto_refresh_indexes": True,
-        "git_commit": False,
-        "git_push": False,
-    },
-}
-
-
-def _deep_merge(base: dict, override: dict) -> dict:
-    for key, value in override.items():
-        if isinstance(value, dict) and isinstance(base.get(key), dict):
-            _deep_merge(base[key], value)
-        else:
-            base[key] = value
-    return base
+CONFIG_PATH = Path(__file__).resolve().with_name("user-config.json")
 
 
 @lru_cache(maxsize=1)
 def load_user_config() -> dict:
-    config = copy.deepcopy(DEFAULT_CONFIG)
-    config_dir = Path(__file__).resolve().parent
-
-    for filename in ("user-config.json", "user-config.local.json"):
-        config_path = config_dir / filename
-        if not config_path.exists():
-            continue
-        with config_path.open("r", encoding="utf-8") as f:
-            loaded = json.load(f)
-        if isinstance(loaded, dict):
-            _deep_merge(config, loaded)
-
-    return config
+    with CONFIG_PATH.open("r", encoding="utf-8") as f:
+        loaded = json.load(f)
+    if not isinstance(loaded, dict):
+        raise ValueError(f"Config file must contain a JSON object: {CONFIG_PATH}")
+    return loaded
 
 
 def _expand(path_value: str) -> Path:
@@ -101,14 +24,22 @@ def paths_config() -> dict:
     return load_user_config()["paths"]
 
 
+def domain_config() -> dict:
+    return load_user_config()["domain"]
+
+
 def daily_papers_config() -> dict:
     return load_user_config()["daily_papers"]
+
+
+def paper_notes_taxonomy_config() -> dict:
+    return load_user_config()["paper_notes_taxonomy"]
 
 
 def automation_config() -> dict:
     config = load_user_config()["automation"]
     if config.get("git_push") and not config.get("git_commit"):
-        config = copy.deepcopy(config)
+        config = dict(config)
         config["git_push"] = False
     return config
 
@@ -135,6 +66,61 @@ def zotero_db_path() -> Path:
 
 def zotero_storage_dir() -> Path:
     return _expand(paths_config()["zotero_storage"])
+
+
+def temp_dir() -> Path:
+    return _expand(paths_config()["temp_dir"])
+
+
+def temp_file_path(filename: str) -> Path:
+    return temp_dir() / filename
+
+
+def focus_themes() -> list[str]:
+    return list(domain_config().get("focus_themes", []))
+
+
+def related_themes() -> list[str]:
+    return list(domain_config().get("related_themes", []))
+
+
+def terminology_config() -> list[dict]:
+    return list(domain_config().get("terminology", []))
+
+
+def frontmatter_keywords() -> list[str]:
+    ordered = []
+    seen = set()
+    for theme in focus_themes() + related_themes():
+        normalized = str(theme).strip()
+        if not normalized:
+            continue
+        dedupe_key = normalized.lower()
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        ordered.append(normalized)
+    return ordered
+
+
+def frontmatter_keywords_csv() -> str:
+    return ", ".join(keyword.lower() for keyword in frontmatter_keywords())
+
+
+def frontmatter_tags() -> list[str]:
+    return list(daily_papers_config().get("frontmatter_tags", []))
+
+
+def paper_notes_taxonomy_categories() -> list[dict]:
+    return list(paper_notes_taxonomy_config().get("categories", []))
+
+
+def paper_notes_taxonomy_fallback_category() -> str:
+    return str(paper_notes_taxonomy_config().get("fallback_category", "_inbox"))
+
+
+def concept_taxonomy_fallback_category() -> str:
+    return str(paper_notes_taxonomy_config().get("concept_fallback_category", "0-uncategorized"))
 
 
 def auto_refresh_indexes_enabled() -> bool:

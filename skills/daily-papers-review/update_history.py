@@ -31,9 +31,9 @@ _SHARED_DIR = Path(__file__).resolve().parent.parent / "_shared"
 if str(_SHARED_DIR) not in sys.path:
     sys.path.insert(0, str(_SHARED_DIR))
 
-from user_config import obsidian_vault_path, temp_file_path
+from user_config import daily_papers_dir, temp_file_path
 
-HISTORY_FILE = obsidian_vault_path() / "DailyPapers" / ".history.json"
+HISTORY_FILE = daily_papers_dir() / ".history.json"
 DAYS_TO_KEEP = 30
 
 

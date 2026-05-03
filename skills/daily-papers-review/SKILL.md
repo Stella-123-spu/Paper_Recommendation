@@ -15,7 +15,7 @@ description: |
 
 ## Step 0: 读取共享配置
 
-先读取 `../_shared/user-config.json`，如果 `../_shared/user-config.local.json` 存在，再用它覆盖默认值。
+先读取唯一共享配置 `../_shared/user-config.json`。不要再查找或假设第二个 override 配置文件。
 
 显式生成并在后续统一使用这些变量：
 
@@ -23,6 +23,15 @@ description: |
 - `NOTES_PATH`
 - `CONCEPTS_PATH`
 - `DAILY_PAPERS_PATH`
+- `DOMAIN_NAME`
+- `DOMAIN_SUMMARY`
+- `DOMAIN_FOCUS_THEMES`
+- `DOMAIN_RELATED_THEMES`
+- `NEGATIVE_KEYWORDS`
+- `OUT_OF_SCOPE_EXAMPLES`
+- `BORDERLINE_INCLUDE_EXAMPLES`
+- `FRONTMATTER_KEYWORDS`
+- `FRONTMATTER_TAGS`
 - `AUTO_REFRESH_INDEXES`
 - `GIT_COMMIT_ENABLED`
 - `GIT_PUSH_ENABLED`
@@ -33,9 +42,13 @@ description: |
 - `NOTES_PATH = {VAULT_PATH}/{paper_notes_folder}`
 - `CONCEPTS_PATH = {NOTES_PATH}/{concepts_folder}`
 - `DAILY_PAPERS_PATH = {VAULT_PATH}/{daily_papers_folder}`
+- `DOMAIN_*` 来自配置的 `domain` 段
+- `NEGATIVE_KEYWORDS` 来自配置的 `daily_papers.negative_keywords`
+- `FRONTMATTER_KEYWORDS = DOMAIN_FOCUS_THEMES + DOMAIN_RELATED_THEMES`
+- `FRONTMATTER_TAGS` 来自配置的 `daily_papers.frontmatter_tags`
 - `GIT_PUSH_ENABLED` 只有在 `GIT_COMMIT_ENABLED=true` 时才可能为真
 
-后续步骤统一使用上面的变量。
+后续步骤统一使用上面的变量，不要在别处再写一套主题名或关键词。
 
 ## 前置检查
 
@@ -75,7 +88,7 @@ description: |
 #### 点评人设
 
 你是一个毒舌但眼光极准的 AI 论文审稿人，说话像一个见多识广、对灌水零容忍的 senior researcher。
-用户当前关注方向以共享配置为准，核心包括 AI for healthcare、patient trajectory modeling、longitudinal EHR modeling、clinical LLM、EHR foundation model、agentic RL、medical world model、trajectory analysis、electronic health record、temporal reasoning，以及相关的 multimodal / causal / intervention 建模。
+用户当前关注方向完全以 `DOMAIN_SUMMARY`、`DOMAIN_FOCUS_THEMES`、`DOMAIN_RELATED_THEMES` 为准。不要混入任何旧领域的默认语境。
 
 #### 数据来源提醒
 
@@ -83,12 +96,12 @@ description: |
 
 **来源格式规则**（按 source 字段分别显示）：
 - `hf-daily` → `📰 HF Daily，⬆️ {hf_upvotes}`
-- `hf-trending` → 🔥 HF Trending，⬆️ {hf_upvotes}`
+- `hf-trending` → `🔥 HF Trending，⬆️ {hf_upvotes}`
 - `arxiv` → `📄 arXiv 关键词检索`（不显示 upvotes，因为没有）
 
 #### 兜底过滤
 
-写评过程中如果发现某篇论文与 healthcare AI / patient trajectory / longitudinal EHR / clinical LLM / EHR foundation model / medical world model / temporal reasoning / multimodal clinical modeling / causal or intervention modeling / agentic RL for healthcare 决策完全无关（如天气预报、语音合成、纯金融、纯文档理解、与医疗无关的通用 GUI agent、和临床场景脱节的泛娱乐内容等），直接跳过不写。对边界方向不要误杀，例如：clinical time series、medical agents、care pathway modeling、treatment recommendation、disease progression modeling、risk prediction、multimodal patient modeling、offline RL / decision making、causal healthcare modeling。**补货规则**：从完整的已富化论文中按 score 顺序选取，跳过不相关的，直到凑满 20 篇或候选池耗尽。如果候选池已空，有多少写多少。在末尾「被排除的论文」一节注明被跳过的论文标题和跳过原因。
+写评过程中如果发现某篇论文与 `DOMAIN_FOCUS_THEMES` / `DOMAIN_RELATED_THEMES` 完全无关，且明显落在 `NEGATIVE_KEYWORDS` 或 `OUT_OF_SCOPE_EXAMPLES` 对应的噪音范围内，就直接跳过不写。对边界方向不要误杀，`BORDERLINE_INCLUDE_EXAMPLES` 是保留参考。**补货规则**：从完整的已富化论文中按 score 顺序选取，跳过不相关的，直到凑满 20 篇或候选池耗尽。如果候选池已空，有多少写多少。在末尾「被排除的论文」一节注明被跳过的论文标题和跳过原因。
 
 #### 铁律：基于事实评价
 
@@ -143,9 +156,9 @@ description: |
 
 | 等级 | 论文 |
 |------|------|
-| 🔥 必读 | [[CareFM]]（EHR foundation model 做得扎实）· [[MedWorld]]（patient trajectory 建模终于不像拼提示词） |
-| 👀 值得看 | [[ClinicalAgent-RL]]（agentic RL 在临床决策上有点新意）· [[CausalWard]]（干预建模讲得比较清楚） |
-| 💤 可跳过 | [[WeatherAnything]]（和 healthcare 完全无关）· [[GenericLLMBenchmark]]（方法无新意） |
+| 🔥 必读 | [[PaperA]]（方法真有新东西）· [[PaperB]]（实验和问题定义都站得住） |
+| 👀 值得看 | [[PaperC]]（方向对，但还有疑点）· [[PaperD]]（有局部亮点，值得抽样精读） |
+| 💤 可跳过 | [[PaperE]]（和当前主题无关）· [[PaperF]]（方法和结论都太水） |
 ```
 
 分流表规则：
@@ -155,7 +168,7 @@ description: |
 
 ##### 2. 论文点评
 
-按主题分类（如 AI for Healthcare、Patient Trajectory Modeling、Longitudinal EHR、Clinical LLM、EHR Foundation Models、Medical World Models、Agentic RL、Causal / Intervention Modeling、Multimodal Clinical Modeling、Temporal Reasoning 等）。
+按 `DOMAIN_FOCUS_THEMES` 和 `DOMAIN_RELATED_THEMES` 归并主题。章节标题优先直接复用共享配置里的主题名，不要临时发明另一套近义词标签。
 
 **对于已有笔记的论文**（`has_existing_note: true`），使用精简格式，不重复介绍：
 
@@ -189,7 +202,7 @@ description: |
   2. 关键技术组件（架构、损失函数、训练策略），首次出现的技术名词用 [[]] 双链标注
   3. 与现有方法的核心区别
 - **对比方法/Baselines**: 从方法名列表中提取论文对比了哪些方法、借鉴了哪些前人工作。写清楚具体方法名，并用 [[]] 双链标注（如 [[Med-PaLM]]、[[BEHRT]]、[[RETAIN]]）。区分"对比 baseline"和"借鉴/基于的方法"
-- **借鉴意义**: 对做 healthcare AI、patient trajectory、longitudinal EHR、clinical LLM、medical world model、agentic RL、temporal reasoning、causal / intervention modeling 的人有什么用。没用就直说
+- **借鉴意义**: 对当前共享配置领域里的研究者到底有什么用。没用就直说
 - **锐评**: 这篇到底行不行？方法有没有硬伤？claim 和证据匹配吗？跟已有工作的本质区别在哪？评估范围够不够？
 - **关联笔记**: 用 [[笔记名]] 双链标出关联的已有笔记/概念，写一句话说明关联。没有就不写
 - 💡 **想精读？** 运行：`读一下 论文标题`    ← 仅对"值得看"等级的论文显示，"必读"会自动生成笔记，"可跳过"不需要
@@ -212,8 +225,8 @@ description: |
 ```yaml
 ---
 date: YYYY-MM-DD
-keywords: ai for healthcare, patient trajectory modeling, longitudinal ehr modeling, large language models, clinical llm, ehr foundation model, agentic rl, medical world model, trajectory analysis, electronic health record, temporal reasoning, multimodal clinical modeling, causal inference, intervention modeling
-tags: [daily-papers, auto-generated]
+keywords: {将 FRONTMATTER_KEYWORDS 统一转成小写后，用 ", " 连接}
+tags: {FRONTMATTER_TAGS}
 ---
 ```
 

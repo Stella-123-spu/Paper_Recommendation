@@ -17,47 +17,28 @@ _SHARED_DIR = Path(__file__).resolve().parents[2] / "_shared"
 if str(_SHARED_DIR) not in sys.path:
     sys.path.insert(0, str(_SHARED_DIR))
 
-from user_config import paper_notes_dir, paths_config, zotero_db_path
+from user_config import (
+    paper_notes_dir,
+    paper_notes_taxonomy_categories,
+    paper_notes_taxonomy_fallback_category,
+    paths_config,
+    zotero_db_path,
+)
 
 # 配置
 PAPER_NOTES_ROOT = paper_notes_dir()
 ZOTERO_DB = zotero_db_path()
 CONCEPTS_DIR_NAME = paths_config()["concepts_folder"]
 
-# 新的分类结构（与概念分类对应）
-# 优先级从上到下，越靠前越优先
+_TAXONOMY_CATEGORIES = paper_notes_taxonomy_categories()
+FALLBACK_CATEGORY = paper_notes_taxonomy_fallback_category()
 CATEGORY_RULES = {
-    # (目录名, 匹配规则 - tags 关键词)
-    # 具体任务优先
-    "4-足式运动": ["legged-locomotion", "quadruped", "bipedal", "locomotion", "parkour", "walking", "humanoid-locomotion", "足式", "腿式"],
-    "3-机器人策略": ["VLA", "imitation-learning", "manipulation", "grasping", "bi-manual", "teleoperation", "action-prediction", "embodied", "机器人策略", "移动操作", "mobile-manipulation"],
-    "5-导航与定位": ["VLN", "navigation", "SLAM", "localization", "mapping", "path-planning", "visual-navigation", "导航", "定位"],
-    "6-3D视觉": ["3DGS", "NeRF", "depth", "3D-vision", "reconstruction", "gaussian-splatting", "point-cloud", "mesh", "3D-generation", "novel-view", "depth-estimation", "PBD", "world-model"],
-    "7-无人机": ["drone", "UAV", "quadrotor", "aerial", "MAV", "无人机", "飞行器"],
-    "8-仿真器": ["simulation", "sim2real", "simulator", "synthetic-data", "domain-randomization", "仿真"],
-    "9-规划与控制": ["planning", "control", "MPC", "trajectory", "motion-planning", "规划", "控制"],
-    # 通用方法
-    "2-强化学习": ["reinforcement-learning", "RL", "PPO", "SAC", "reward", "policy-gradient", "强化学习", "GRPO"],
-    "1-生成模型": ["diffusion", "flow-matching", "generative", "GAN", "VAE", "autoregressive", "video-generation", "生成模型"],
-    "10-深度学习基础": ["transformer", "CNN", "attention", "backbone", "pre-training", "VLM", "LLM", "foundation-model", "深度学习"],
-    "11-物理仿真": ["physics", "dynamics", "contact", "friction", "deformable", "物理"],
-    "12-Survey": ["survey", "review", "benchmark", "tutorial", "综述"],
+    item["name"]: item.get("keywords", [])
+    for item in _TAXONOMY_CATEGORIES
 }
-
-# Zotero 分类 ID 映射（需要根据实际情况更新）
 ZOTERO_COLLECTION_MAP = {
-    "1-生成模型": None,  # 需要在 Zotero 中创建
-    "2-强化学习": 31,    # 2-DRL
-    "3-机器人策略": 36,  # VLA
-    "4-足式运动": 26,    # Locomotion
-    "5-导航与定位": 43,  # VLN
-    "6-3D视觉": 13,      # 3-3D Vision
-    "7-无人机": None,
-    "8-仿真器": 32,      # 0-Simulation
-    "9-规划与控制": None,
-    "10-深度学习基础": 2, # 1-Deep Learning
-    "11-物理仿真": 37,   # Physical Simulation
-    "12-Survey": None,
+    item["name"]: item.get("zotero_collection_id")
+    for item in _TAXONOMY_CATEGORIES
 }
 
 
@@ -172,7 +153,7 @@ def strip_inline_comment(raw_value: str) -> str:
 def determine_category(tags: List[str], title: str = "") -> str:
     """根据 tags 判断论文应该属于哪个分类"""
     if not tags:
-        return "_inbox"
+        return FALLBACK_CATEGORY
 
     # 确保所有 tags 都是字符串
     tags_lower = [str(t).lower() for t in tags]
@@ -204,7 +185,7 @@ def determine_category(tags: List[str], title: str = "") -> str:
     best_category = max(scores, key=scores.get)
     if scores[best_category] > 0:
         return best_category
-    return "_inbox"
+    return FALLBACK_CATEGORY
 
 
 def get_all_notes() -> List[Path]:
@@ -325,7 +306,7 @@ def update_frontmatter_collection(filepath: Path, new_collection: str):
 
 
 def get_collection_path(collections: Dict[int, Dict[str, Optional[int]]], collection_id: int) -> str:
-    """获取分类完整路径，如 3-Robotics/1-VLX/VLA"""
+    """获取分类完整路径，如 一级分类/二级分类/主题名"""
     path_parts = []
     current = collection_id
     while current:

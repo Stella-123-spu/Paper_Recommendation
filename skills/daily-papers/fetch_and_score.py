@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-fetch_and_score.py — Phase 1+2: Fetch, score, merge, dedup, select top 30.
+fetch_and_score.py — Phase 1+2: Fetch, score, merge, dedup, select top papers.
 
 Replaces the LLM orchestration step with pure Python. Zero token cost.
 
 Usage:
-    python3 fetch_and_score.py > /tmp/daily_papers_top30.json
-    python3 fetch_and_score.py --date 2026-02-25 > /tmp/daily_papers_top30.json
-    python3 fetch_and_score.py --days 7 > /tmp/daily_papers_top30.json
+    python3 fetch_and_score.py > /tmp/daily_papers_top.json
+    python3 fetch_and_score.py --date 2026-02-25 > /tmp/daily_papers_top.json
+    python3 fetch_and_score.py --days 7 > /tmp/daily_papers_top.json
 
-Stderr: progress logs.  Stdout: JSON array of top papers (30 * days).
+Stderr: progress logs. Stdout: JSON array of top papers (`top_n * days`).
 """
 
 import argparse

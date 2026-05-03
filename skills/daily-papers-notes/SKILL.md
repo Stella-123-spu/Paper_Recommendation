@@ -15,7 +15,7 @@ description: |
 
 ## Step 0: 读取共享配置
 
-先读取 `../_shared/user-config.json`，如果 `../_shared/user-config.local.json` 存在，再用它覆盖默认值。
+先读取唯一共享配置 `../_shared/user-config.json`。不要再查找或假设第二个 override 配置文件。
 
 显式生成并在后续统一使用这些变量：
 
@@ -23,6 +23,11 @@ description: |
 - `NOTES_PATH`
 - `CONCEPTS_PATH`
 - `DAILY_PAPERS_PATH`
+- `DOMAIN_NAME`
+- `DOMAIN_SUMMARY`
+- `DOMAIN_FOCUS_THEMES`
+- `DOMAIN_RELATED_THEMES`
+- `PAPER_NOTES_TAXONOMY`
 - `NOTE_TEMPLATE = ../daily-papers-notes/论文笔记模板.md`
 - `AUTO_REFRESH_INDEXES`
 - `GIT_COMMIT_ENABLED`
@@ -34,6 +39,8 @@ description: |
 - `NOTES_PATH = {VAULT_PATH}/{paper_notes_folder}`
 - `CONCEPTS_PATH = {NOTES_PATH}/{concepts_folder}`
 - `DAILY_PAPERS_PATH = {VAULT_PATH}/{daily_papers_folder}`
+- `DOMAIN_*` 来自配置的 `domain` 段
+- `PAPER_NOTES_TAXONOMY` 来自配置的 `paper_notes_taxonomy` 段
 - `GIT_PUSH_ENABLED` 只有在 `GIT_COMMIT_ENABLED=true` 时才可能为真
 
 后续步骤统一使用上面的变量。
@@ -65,7 +72,7 @@ description: |
 **1c: 创建缺失的概念笔记（自动归类）**
 检查 `{CONCEPTS_PATH}/` 下是否已存在（搜索所有子目录）。对于缺失的概念，**根据概念类型自动归类到对应子目录**，不要全扔 `0-uncategorized/`。
 
-分类规则见 `../paper-reader/references/concept-categories.md`
+分类规则见 `../paper-reader/references/concept-categories.md`，其主题目录与优先级都以共享配置里的 `paper_notes_taxonomy` 为准。
 
 概念笔记模板见 `../paper-reader/references/concept-categories.md`
 

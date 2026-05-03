@@ -9,9 +9,9 @@ Paper Reading Daemon - 后台论文阅读守护进程
 4. 支持断点续传
 
 用法：
-    # 启动守护进程处理 VLA 分类
+    # 启动守护进程处理某个 Zotero 分类
     screen -S paper-daemon
-    python3 paper_daemon.py -c "VLA"
+    python3 paper_daemon.py -c "目标分类名"
 
     # 查看进度
     python3 paper_daemon.py --status

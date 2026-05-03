@@ -15,6 +15,10 @@ Tracked skill folders:
 - `skills/daily-papers-notes`
 - `skills/paper-reader`
 
+Shared configuration:
+
+- `skills/_shared/user-config.json` is the single source of truth for paths, domain focus, daily-paper scoring keywords, and paper-note taxonomy.
+
 Local sync model:
 
 - The directories under `~/.codex/skills/` for the folders above are symbolic links to this repository.

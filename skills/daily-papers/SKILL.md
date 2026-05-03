@@ -28,7 +28,7 @@ description: |
    - 推荐文件已生成
    - 重点论文笔记已生成多少篇
    - 目录页是否已自动刷新
-6. 论文主题、筛选方向、点评重心统一以 `../_shared/user-config.json`（及可选的 `user-config.local.json`）为准，不要沿用过时的默认研究主题。
+6. 论文主题、筛选方向、点评重心统一以唯一配置文件 `../_shared/user-config.json` 为准，不要在任何 skill 里再维护第二套研究主题。
 
 ## 重要约束
 
