@@ -16,6 +16,128 @@ It turns a single natural-language request into a full literature workflow:
 
 Built for people who want more than a paper dump, the workflow emphasizes **topic relevance**, **cross-source deduplication**, **time-window-aware retrieval**, **history-aware recommendations**, and **structured downstream note generation**.
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [At a Glance](#at-a-glance)
+- [Adapting to Another Research Domain](#adapting-to-another-research-domain)
+- [Architecture](#architecture)
+- [Why This Project](#why-this-project)
+- [Launch Highlights](#launch-highlights)
+- [What It Includes](#what-it-includes)
+- [Pipeline Overview](#pipeline-overview)
+- [Sources](#sources)
+- [Time Windows and Retrieval Behavior](#time-windows-and-retrieval-behavior)
+- [Ranking and Deduplication](#ranking-and-deduplication)
+- [History Awareness](#history-awareness)
+- [Metadata Enrichment](#metadata-enrichment)
+- [Configuration](#configuration)
+- [Obsidian-Native Workflow](#obsidian-native-workflow)
+- [Repo Layout](#repo-layout)
+- [Typical Usage](#typical-usage)
+- [Operational Notes](#operational-notes)
+- [Local Sync Model](#local-sync-model)
+- [Upstream Acknowledgement](#upstream-acknowledgement)
+- [Status](#status)
+
+## Quick Start
+
+This section is written for a non-technical researcher who wants a working paper recommendation setup first and deeper customization second.
+
+### 1. Install Codex
+
+Install Codex on your computer first.
+
+If you are starting from scratch, the simplest path is:
+
+- download Codex
+- complete its setup on your machine
+- confirm it can open and edit a local project folder
+
+If you prefer another AI coding assistant, you can also use **Claude Code** to help edit the config. This repository is still designed to run most naturally with **Codex**.
+
+### 2. Download This Repository
+
+Get this repository onto your computer in a place you can find easily, such as your Documents folder.
+
+You can do that by:
+
+- cloning it with Git, or
+- downloading it as a ZIP and extracting it
+
+Then open the repository folder in Codex.
+
+### 3. Prepare Your Obsidian Vault
+
+This project writes outputs into **Obsidian**, so you should have:
+
+- an existing Obsidian vault for your research, or
+- a new Obsidian vault created just for this project
+
+You do not need to build the whole folder structure by hand before starting. The key thing is knowing where your vault lives on disk.
+
+### 4. Ask Codex to Set Up the Config for You
+
+The most important setup file is:
+
+- `skills/_shared/user-config.json`
+
+Open that file in Codex and ask it to adapt the project to:
+
+- your research domain
+- your Obsidian vault path
+- your folder names for daily recommendations, paper notes, and concept notes
+
+Example prompt you can paste into Codex:
+
+> Update `skills/_shared/user-config.json` for my setup. My research domain is computational neuroscience. My Obsidian vault is at `/path/to/my/vault`. Please rewrite the domain description, focus themes, related themes, exclusions, ranking keywords, arXiv categories, and note taxonomy for this field. Also update the Obsidian folder paths and names so the outputs go into my vault. Keep the rest of the pipeline structure unchanged.
+
+If your field is different, replace `computational neuroscience` and the vault path with your own information.
+
+### 5. Check the Config Before Running Anything
+
+Before you run the pipeline, quickly confirm that `user-config.json` matches your real setup:
+
+- the vault path is correct
+- the folder names look right
+- the domain is your domain, not Healthcare AI
+- the keywords match the papers you want
+- the negative keywords block the noise you do not want
+
+### 6. Run Your First Recommendation
+
+In Codex, try one of these prompts:
+
+- `今日论文推荐`
+- `过去3天论文推荐`
+- `过去一周论文推荐`
+
+For a first test, `过去3天论文推荐` is often a good starting point because it gives the system a slightly larger pool than a single-day run.
+
+### 7. Open Obsidian and Inspect the Output
+
+After the run finishes, open your Obsidian vault and look for:
+
+- a daily recommendation note
+- generated paper notes for stronger papers
+- concept notes or updated concept folders
+- refreshed index or MOC pages, if enabled
+
+If the results are off-topic, go back to `user-config.json` and ask Codex to tighten the keywords, exclusions, categories, or taxonomy.
+
+### 8. Tune Once, Then Use Daily
+
+Treat your first run as calibration.
+
+A practical setup loop is:
+
+1. run a 1-day or 3-day recommendation
+2. inspect the results in Obsidian
+3. ask Codex to improve the config
+4. run it again
+
+Usually one or two iterations is enough to make the recommendations feel much more natural for your field.
+
 ## At a Glance
 
 - One-command daily paper pipeline for Codex
@@ -123,20 +245,6 @@ Your config is in good shape when:
 Do not only change `domain.name` and `domain.summary`.
 
 If you leave the healthcare keywords, taxonomy, exclusion lists, or Obsidian path settings in place, the pipeline will still behave like a healthcare-focused recommender and may write outputs into the wrong vault even if the title says otherwise.
-
-## Quick Start
-
-1. Point the shared config at your local vault and folders in `skills/_shared/user-config.json`.
-2. Ensure the linked skill directories under `~/.codex/skills/` point to this repository.
-3. In Codex, run one of the top-level prompts:
-   - `今日论文推荐`
-   - `过去3天论文推荐`
-   - `过去一周论文推荐`
-4. Let the pipeline generate:
-   - ranked candidates
-   - a daily recommendation note
-   - deep notes for the strongest papers
-   - refreshed concept and paper indexes when enabled
 
 ## Architecture
 
