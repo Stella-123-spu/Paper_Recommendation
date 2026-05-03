@@ -50,7 +50,7 @@ A good workflow is:
 
 Example prompt:
 
-> Adapt this repository from Healthcare AI to computational neuroscience. Update `skills/_shared/user-config.json` so the domain summary, focus themes, related themes, out-of-scope examples, ranking keywords, negative keywords, domain boost keywords, arXiv categories, and paper note taxonomy all match that field. Keep the pipeline structure unchanged.
+> Adapt this repository from Healthcare AI to computational neuroscience. Update `skills/_shared/user-config.json` so the Obsidian vault paths and folder names, domain summary, focus themes, related themes, out-of-scope examples, ranking keywords, negative keywords, domain boost keywords, arXiv categories, and paper note taxonomy all match that field. Keep the pipeline structure unchanged.
 
 ### What You Should Change First
 
@@ -58,6 +58,11 @@ Start with `skills/_shared/user-config.json`. That is the main adaptation surfac
 
 Update at least these sections:
 
+- `paths.obsidian_vault`
+- `paths.paper_notes_folder`
+- `paths.daily_papers_folder`
+- `paths.concepts_folder`
+- `paths.temp_dir`
 - `domain.name`
 - `domain.summary`
 - `domain.focus_themes`
@@ -72,6 +77,7 @@ Update at least these sections:
 
 In practice:
 
+- Point the vault path and folder names at your own Obsidian setup
 - Replace the healthcare description with your own field definition
 - Rewrite the ranking keywords around your actual research vocabulary
 - Add negative keywords for adjacent areas you do not want flooding results
@@ -116,7 +122,7 @@ Your config is in good shape when:
 
 Do not only change `domain.name` and `domain.summary`.
 
-If you leave the healthcare keywords, taxonomy, and exclusion lists in place, the pipeline will still behave like a healthcare-focused recommender even if the title says otherwise.
+If you leave the healthcare keywords, taxonomy, exclusion lists, or Obsidian path settings in place, the pipeline will still behave like a healthcare-focused recommender and may write outputs into the wrong vault even if the title says otherwise.
 
 ## Quick Start
 
