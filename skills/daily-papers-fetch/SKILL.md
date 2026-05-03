@@ -1,7 +1,7 @@
 ---
 name: daily-papers-fetch
 description: |
-  论文抓取（3 步流水线的第 1 步）。抓取 arXiv + HuggingFace 最新论文，打分筛选，富化信息，
+  论文抓取（3 步流水线的第 1 步）。抓取 arXiv + HuggingFace + PubMed + bioRxiv + medRxiv 最新论文，打分筛选，富化信息，
   输出到 /tmp/daily_papers_enriched.json 供后续 skill 使用。
 
   触发词："论文抓取"、"跑一下论文抓取"
@@ -61,7 +61,7 @@ description: |
 
 ### Phase 1+2: 抓取 + 打分 + 合并去重（纯 Python 脚本）
 
-用 `fetch_and_score.py` 一步完成 HF + arXiv 抓取、打分、合并去重、历史去重、按配置选 Top N。**零 token 消耗。**
+用 `fetch_and_score.py` 一步完成 HuggingFace + arXiv + PubMed + bioRxiv + medRxiv 抓取、打分、合并去重、历史去重、按配置选 Top N。**零 token 消耗。**
 
 ```bash
 # 默认：当天
@@ -74,9 +74,9 @@ python3 ../daily-papers/fetch_and_score.py --days N > /tmp/daily_papers_top30.js
 根据前面解析的 `DAYS_ARG`，如果用户指定了天数就加 `--days N`，否则不加。
 
 脚本自动完成：
-- 并行抓取 HuggingFace Daily + Trending API 和 arXiv API
+- 并行抓取 HuggingFace Daily + Trending API、arXiv API、PubMed、bioRxiv、medRxiv
 - 关键词打分（正向/负向/领域加分/trending 加分）
-- 按 arXiv ID 合并去重
+- 按 `paper_id` / DOI / arXiv ID / 标题哈希跨源合并去重
 - 读取 `.history.json` 跨天去重（含周末模式放宽规则）
 - 不足 20 篇时从历史回填
 - 按共享配置中的 `top_n` 降序选取结果
@@ -131,6 +131,7 @@ cat /tmp/daily_papers_top30.json | python3 ../daily-papers/enrich_papers.py /tmp
 - Phase 3 使用 `enrich_papers.py` 脚本，同样由当前 Codex 会话直接执行
 - 如果脚本执行失败，检查 stderr 输出诊断问题
 - 如果 arXiv API 抓取失败，脚本自动 fallback 到仅 HuggingFace 源
+- 如果 medRxiv 在 Python SSL 路径下抓取失败，脚本会自动 fallback 到 `curl`
 - 如果总论文数不足 20 篇，有多少处理多少
 - **周末策略**：arXiv 周末不更新，HF daily 周末基本为空，但 HF trending 持续更新。周末主要依赖 trending 来源
 - **不做 git 操作**，不生成推荐文件，只输出临时 JSON

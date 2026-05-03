@@ -5,6 +5,7 @@ description: |
   “最近3天论文”“看看这周有啥论文”时使用。
 
   内部会自动串联论文抓取、推荐生成、重点论文笔记三步，无需用户手动拆开。
+  抓取源默认覆盖 HuggingFace、arXiv、PubMed、bioRxiv、medRxiv，并在推荐前统一去重。
 ---
 
 # 每日论文推荐

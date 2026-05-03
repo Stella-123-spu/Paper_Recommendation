@@ -93,7 +93,7 @@ description: |
    - 对已有 `📒 **笔记**` 标记的论文，用 Glob 找到对应笔记文件，检查行数
    - **行数 < 100 的视为骨架笔记，必须重新生成**（删除旧文件，重新调用 paper-reader）
    - 行数 >= 100 且包含 `## 关键公式` 和 `## 关键图表` 的才算合格，可以跳过
-5. 对每篇需要生成/重新生成的论文，让对应的 subagent 调用 `paper-reader` skill（传入 arXiv 链接）
+5. 对每篇需要生成/重新生成的论文，让对应的 subagent 调用 `paper-reader` skill（优先传入抓取结果里的 `url`；若有 DOI 也可一并提供）
 6. 笔记生成后，paper-reader 会自动补充概念库，无需重复
 7. 如果用户提供了 Obsidian 笔记模板，或当前 skill 已配置 `NOTE_TEMPLATE`，则 subagent 必须把该模板作为最终成稿骨架；可以补充 `paper-reader` 要求的公式、图片、表格和概念链接，但不要偏离模板主结构
 
@@ -102,7 +102,7 @@ description: |
 给每个 subagent 的任务里，至少包含这些信息：
 
 - 论文标题
-- arXiv 链接
+- 论文链接（优先 `url`，必要时补充 DOI）
 - 目标根目录：`{NOTES_PATH}`
 - 模板路径：`{NOTE_TEMPLATE}`
 - 约束：必须使用 `paper-reader` skill；必须写出真实论文笔记，不能只更新 `_index.md` 之类的目录页
@@ -116,7 +116,7 @@ description: |
 必须使用 [$paper-reader](../paper-reader/SKILL.md) skill 生成完整论文笔记。
 请使用 gpt-5.4-mini。
 论文：{标题}
-链接：{arXiv URL}
+链接：{论文 URL / DOI}
 模板：{NOTE_TEMPLATE}
 输出要求：把真实笔记写到 {NOTES_PATH} 下，不要只更新目录页；最终结构以模板为骨架，同时保留 paper-reader 要求的完整内容；完成后回复最终笔记路径。
 ```

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Batch-enrich arXiv papers with metadata from HTML/abs pages.
+"""Batch-enrich daily papers with metadata from source-specific pages.
 
 Usage:
     cat /tmp/daily_papers_top30.json | python3 enrich_papers.py > /tmp/daily_papers_enriched.json
@@ -18,6 +18,7 @@ import asyncio
 import json
 import re
 import sys
+import xml.etree.ElementTree as ET
 from collections import Counter
 
 SEMAPHORE_LIMIT = 10
@@ -116,6 +117,25 @@ async def curl_fetch(url: str, sem: asyncio.Semaphore, timeout: int = CURL_TIMEO
 def strip_tags(html: str) -> str:
     """Remove HTML tags from a string."""
     return re.sub(r"<[^>]+>", "", html)
+
+
+def _clean_text(text: str) -> str:
+    return re.sub(r"\s+", " ", strip_tags(text)).strip()
+
+
+def _truncate_method_summary(section_text: str) -> str:
+    """Normalize and trim a summary to a compact, readable paragraph."""
+    section_text = re.sub(r"\s+", " ", section_text).strip()
+    section_text = re.sub(r"\s*\[\d+(?:,\s*\d+)*\]", "", section_text)
+
+    if len(section_text) > 500:
+        end = section_text.rfind(". ", 300, 550)
+        if end > 0:
+            section_text = section_text[:end + 1]
+        else:
+            section_text = section_text[:500].rsplit(" ", 1)[0] + "..."
+
+    return section_text if len(section_text) >= 100 else ""
 
 
 def extract_figure_url(html: str, arxiv_id: str) -> str:
@@ -277,21 +297,7 @@ def extract_method_summary(html: str) -> str:
     if not section_text:
         return ""
 
-    # Clean up
-    section_text = re.sub(r"\s+", " ", section_text).strip()
-    # Remove citation markers like [1], [2,3]
-    section_text = re.sub(r"\s*\[\d+(?:,\s*\d+)*\]", "", section_text)
-
-    # Truncate to ~300-500 chars at sentence boundary
-    if len(section_text) > 500:
-        # Find sentence end near 500 chars
-        end = section_text.rfind(". ", 300, 550)
-        if end > 0:
-            section_text = section_text[:end + 1]
-        else:
-            section_text = section_text[:500].rsplit(" ", 1)[0] + "..."
-
-    return section_text if len(section_text) >= 100 else ""
+    return _truncate_method_summary(section_text)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -307,6 +313,108 @@ def extract_from_abs(html: str) -> dict:
         if m.strip():
             affils.add(m.strip())
     return {"authors": authors, "affiliations": list(affils)}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JATS XML extractors (bioRxiv / medRxiv)
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def _tag_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def _node_text(node: ET.Element | None) -> str:
+    if node is None:
+        return ""
+    return re.sub(r"\s+", " ", "".join(node.itertext())).strip()
+
+
+def extract_from_jats(xml_text: str, paper_title: str) -> dict:
+    """Extract useful fields from a JATS XML document."""
+    result = {
+        "authors": [],
+        "affiliations": [],
+        "section_headers": [],
+        "captions": [],
+        "has_real_world": False,
+        "method_names": [],
+        "method_summary": "",
+    }
+    if not xml_text.strip():
+        return result
+
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return result
+
+    authors = []
+    affiliations = []
+    section_headers = []
+    captions = []
+
+    for contrib in root.iter():
+        if _tag_name(contrib.tag) != "contrib":
+            continue
+        if contrib.attrib.get("contrib-type") != "author":
+            continue
+        surname = _node_text(next((c for c in contrib if _tag_name(c.tag) == "surname"), None))
+        given = _node_text(next((c for c in contrib if _tag_name(c.tag) == "given-names"), None))
+        string_name = _node_text(next((c for c in contrib if _tag_name(c.tag) in {"string-name", "name"}), None))
+        name = " ".join(part for part in (given, surname) if part).strip() or string_name
+        if name:
+            authors.append(name)
+
+    for aff in root.iter():
+        if _tag_name(aff.tag) == "aff":
+            text = _node_text(aff)
+            if text and text not in affiliations:
+                affiliations.append(text)
+
+    full_text_parts = []
+    for sec in root.iter():
+        if _tag_name(sec.tag) != "sec":
+            continue
+        title_node = next((child for child in sec if _tag_name(child.tag) == "title"), None)
+        title = _node_text(title_node)
+        if title:
+            section_headers.append(title)
+
+        paragraphs = []
+        for child in sec.iter():
+            if _tag_name(child.tag) == "p":
+                text = _node_text(child)
+                if text:
+                    paragraphs.append(text)
+        if paragraphs:
+            full_text_parts.extend(paragraphs)
+
+        if title and re.search(r"(method|approach|framework|proposed|materials? and methods?)", title, re.IGNORECASE):
+            summary = _truncate_method_summary(" ".join(paragraphs))
+            if summary and not result["method_summary"]:
+                result["method_summary"] = summary
+
+    for fig in root.iter():
+        if _tag_name(fig.tag) not in {"fig", "table-wrap"}:
+            continue
+        for child in fig.iter():
+            if _tag_name(child.tag) == "caption":
+                text = _node_text(child)
+                if 10 <= len(text) <= 200:
+                    captions.append(text)
+                break
+
+    full_text = " ".join(full_text_parts)
+    result["authors"] = authors
+    result["affiliations"] = affiliations
+    result["section_headers"] = section_headers[:25]
+    result["captions"] = captions[:8]
+    result["has_real_world"] = any(kw in full_text.lower() for kw in REAL_WORLD_KEYWORDS)
+    result["method_names"] = extract_method_names(full_text, paper_title)
+    if not result["method_summary"]:
+        result["method_summary"] = _truncate_method_summary(full_text[:1200])
+    return result
 
 
 
@@ -353,90 +461,97 @@ async def extract_affiliations_pdf(arxiv_id: str, sem: asyncio.Semaphore,
 
 async def enrich_one(paper: dict, sem: asyncio.Semaphore) -> dict:
     """Enrich a single paper with metadata from HTML and abs pages."""
+    result = dict(paper)
+    result.setdefault("figure_url", paper.get("figure_url", ""))
+    result.setdefault("section_headers", list(paper.get("section_headers", []) or []))
+    result.setdefault("captions", list(paper.get("captions", []) or []))
+    result.setdefault("has_real_world", bool(paper.get("has_real_world", False)))
+    result.setdefault("method_names", list(paper.get("method_names", []) or []))
+    result.setdefault("method_summary", paper.get("method_summary", ""))
+
+    source = paper.get("source", "")
     arxiv_id = paper.get("arxiv_id", "")
     if not arxiv_id:
-        # Try to extract from URL
         url = paper.get("url", "")
         m = re.search(r"(\d{4}\.\d{4,5})", url)
         arxiv_id = m.group(1) if m else ""
-    if not arxiv_id:
-        return paper
 
     title = paper.get("title", "")
-    result = dict(paper)  # copy
 
     try:
-        # Fetch HTML page
-        html_url = f"https://arxiv.org/html/{arxiv_id}"
-        html = await curl_fetch(html_url, sem)
+        if arxiv_id:
+            html_url = f"https://arxiv.org/html/{arxiv_id}"
+            html = await curl_fetch(html_url, sem)
 
-        # Parse HTML if we got content
-        html_authors = []
-        html_affiliations = []
-        figure_url = ""
-        section_headers = []
-        captions = []
-        has_real_world = False
-        method_names = []
-        method_summary = ""
+            html_authors = []
+            html_affiliations = []
+            figure_url = ""
+            section_headers = []
+            captions = []
+            has_real_world = False
+            method_names = []
+            method_summary = ""
 
-        if html and len(html) > 1000:
-            figure_url = extract_figure_url(html, arxiv_id)
-            html_authors = extract_authors_html(html)
-            html_affiliations = extract_affiliations_html(html)
-            section_headers = extract_section_headers(html)
-            captions = extract_captions(html)
-            has_real_world = extract_has_real_world(html)
-            method_names = extract_method_names(html, title)
-            method_summary = extract_method_summary(html)
+            if html and len(html) > 1000:
+                figure_url = extract_figure_url(html, arxiv_id)
+                html_authors = extract_authors_html(html)
+                html_affiliations = extract_affiliations_html(html)
+                section_headers = extract_section_headers(html)
+                captions = extract_captions(html)
+                has_real_world = extract_has_real_world(html)
+                method_names = extract_method_names(html, title)
+                method_summary = extract_method_summary(html)
 
-        # Abs fallback if HTML authors OR affiliations are empty
-        abs_authors = []
-        abs_affiliations = []
-        if not html_authors or not html_affiliations:
-            abs_url = f"https://arxiv.org/abs/{arxiv_id}"
-            abs_html = await curl_fetch(abs_url, sem)
-            if abs_html:
-                abs_data = extract_from_abs(abs_html)
-                abs_authors = abs_data["authors"]
-                abs_affiliations = abs_data["affiliations"]
+            abs_authors = []
+            abs_affiliations = []
+            if not html_authors or not html_affiliations:
+                abs_url = f"https://arxiv.org/abs/{arxiv_id}"
+                abs_html = await curl_fetch(abs_url, sem)
+                if abs_html:
+                    abs_data = extract_from_abs(abs_html)
+                    abs_authors = abs_data["authors"]
+                    abs_affiliations = abs_data["affiliations"]
 
-        # PDF fallback for affiliations if still empty
-        pdf_affiliations = []
-        if not html_affiliations and not abs_affiliations:
-            pdf_affiliations = await extract_affiliations_pdf(arxiv_id, sem)
+            pdf_affiliations = []
+            if not html_affiliations and not abs_affiliations:
+                pdf_affiliations = await extract_affiliations_pdf(arxiv_id, sem)
 
-        # ── Merge with priority rules ──
-        # Principle: new extraction > existing input, but never overwrite non-empty with empty
+            result["figure_url"] = figure_url or result.get("figure_url", "")
+            if html_affiliations:
+                result["affiliations"] = ", ".join(html_affiliations)
+            elif abs_affiliations:
+                result["affiliations"] = ", ".join(abs_affiliations)
+            elif pdf_affiliations:
+                result["affiliations"] = ", ".join(pdf_affiliations)
 
-        # figure_url: HTML curl > keep existing
-        result["figure_url"] = figure_url or paper.get("figure_url", "")
+            if html_authors:
+                result["authors"] = ", ".join(html_authors)
+            elif abs_authors:
+                result["authors"] = ", ".join(abs_authors)
 
-        # affiliations: HTML > abs fallback > PDF fallback > keep existing input
-        if html_affiliations:
-            result["affiliations"] = ", ".join(html_affiliations)
-        elif abs_affiliations:
-            result["affiliations"] = ", ".join(abs_affiliations)
-        elif pdf_affiliations:
-            result["affiliations"] = ", ".join(pdf_affiliations)
-        # else: keep whatever was in the input (supports re-enriching enriched data)
+            result["section_headers"] = section_headers
+            result["captions"] = captions
+            result["has_real_world"] = has_real_world
+            result["method_names"] = method_names
+            result["method_summary"] = method_summary
 
-        # authors: HTML > abs fallback > keep existing input
-        if html_authors:
-            result["authors"] = ", ".join(html_authors)
-        elif abs_authors:
-            result["authors"] = ", ".join(abs_authors)
-        # else: keep original
-
-        # Other enriched fields
-        result["section_headers"] = section_headers
-        result["captions"] = captions
-        result["has_real_world"] = has_real_world
-        result["method_names"] = method_names
-        result["method_summary"] = method_summary
+        elif source in {"biorxiv", "medrxiv"} and paper.get("jatsxml"):
+            xml_text = await curl_fetch(paper["jatsxml"], sem)
+            if xml_text:
+                jats = extract_from_jats(xml_text, title)
+                if jats["authors"]:
+                    result["authors"] = ", ".join(jats["authors"])
+                if jats["affiliations"]:
+                    result["affiliations"] = ", ".join(jats["affiliations"])
+                result["section_headers"] = jats["section_headers"]
+                result["captions"] = jats["captions"]
+                result["has_real_world"] = jats["has_real_world"]
+                result["method_names"] = jats["method_names"]
+                result["method_summary"] = jats["method_summary"]
 
     except Exception as e:
-        print(f"  [error] {arxiv_id}: {e}", file=sys.stderr)
+        label = arxiv_id or paper.get("paper_id") or paper.get("url", "unknown")
+        print(f"  [error] {label}: {e}", file=sys.stderr)
 
     return result
 

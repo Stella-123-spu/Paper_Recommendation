@@ -92,12 +92,15 @@ description: |
 
 #### 数据来源提醒
 
-每篇论文的 `source`（hf-daily / hf-trending / arxiv）和 `hf_upvotes` 来自抓取数据，必须保留到输出中。`method_summary` 来自富化数据，用于撰写核心方法描述。
+每篇论文的 `source`（hf-daily / hf-trending / arxiv / pubmed / biorxiv / medrxiv）和 `hf_upvotes` 来自抓取数据，必须保留到输出中。`method_summary` 来自富化数据，用于撰写核心方法描述。
 
 **来源格式规则**（按 source 字段分别显示）：
 - `hf-daily` → `📰 HF Daily，⬆️ {hf_upvotes}`
 - `hf-trending` → `🔥 HF Trending，⬆️ {hf_upvotes}`
 - `arxiv` → `📄 arXiv 关键词检索`（不显示 upvotes，因为没有）
+- `pubmed` → `🧬 PubMed`
+- `biorxiv` → `🧪 bioRxiv`
+- `medrxiv` → `🏥 medRxiv`
 
 #### 兜底过滤
 
@@ -174,7 +177,7 @@ description: |
 
 ```markdown
 ### N. 论文标题
-- **链接**: [arXiv](https://arxiv.org/abs/XXXX) | [PDF](https://arxiv.org/pdf/XXXX)
+- **链接**: 优先使用富化数据里的 `url`；如果 `pdf` 非空则追加 `| [PDF/Full Text](...)`
 - **来源**: {见下方来源格式}
 
 > ⏪ **再推提醒**：这篇在 {last_recommend_date} 推荐过
@@ -189,7 +192,7 @@ description: |
 ### N. 论文标题
 - **作者**: 完整作者列表（优先使用富化的 authors 字段，其次用原始 authors 字段）
 - **机构**: 从富化的 affiliations 字段获取，列出所有机构。如果 affiliations 为空，再检查原始 affiliations 字段。都没有则写"未知"
-- **链接**: [arXiv](https://arxiv.org/abs/XXXX) | [PDF](https://arxiv.org/pdf/XXXX)
+- **链接**: 优先使用富化数据里的 `url`；如果 `pdf` 非空则追加 `| [PDF/Full Text](...)`
 - **来源**: {见下方来源格式}
 
 > ⏪ **再推提醒**：这篇在 {last_recommend_date} 推荐过
@@ -236,8 +239,8 @@ tags: {FRONTMATTER_TAGS}
 
 1. **更新历史记录**：
    - 读取 `{DAILY_PAPERS_PATH}/.history.json`（不存在则创建空数组）
-   - 提取本次推荐的所有 arXiv ID + 标题，追加为 `{"id": "XXXX", "date": "YYYY-MM-DD", "title": "..."}`
-   - **去重规则**：如果某个 arXiv ID 已存在于 history 中，保留**最早的 date**（不要用今天的日期覆盖）
+   - 提取本次推荐的所有 `paper_id` + 标题，追加为 `{"id": "XXXX", "date": "YYYY-MM-DD", "title": "..."}`
+   - **去重规则**：如果某个 `paper_id` 已存在于 history 中，保留**最早的 date**（不要用今天的日期覆盖）
    - 只保留最近 30 天的记录（删除 date 早于 30 天前的条目）
    - 写回 `.history.json`
    - **完整性校验**（必须执行）：
