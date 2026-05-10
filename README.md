@@ -204,6 +204,7 @@ Key files:
 
 - [x] Add a full English version
 - [ ] Add a GUI to make the workflow more user friendly
+- [ ] Add saving PDFs to Zotero
 - [ ] Learn from user interactions over time
 
 ## Notes
