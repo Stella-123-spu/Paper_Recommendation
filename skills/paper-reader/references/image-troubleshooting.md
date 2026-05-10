@@ -1,91 +1,86 @@
-# 图片获取排错指南
+# Image Troubleshooting
 
-## ar5iv 图片 URL 的坑
+Use this reference when paper figures do not load, arXiv HTML is incomplete, or figure numbering does not match the PDF.
 
-ar5iv 的 asset 编号（x1.png, x2.png...）**不一定对应论文的 Figure 编号**！
+## Retrieval Priority
 
-常见问题：
-- 小 icon/箭头/符号图片也占编号，容易下载到错误图片
-- 同一 Figure 的子图（a/b/c）可能用不连续的编号
-- 某些 Figure 是由多个小图拼成的
+### Source A: arXiv HTML (Preferred)
 
-**解决方法**:
-1. 用 WebFetch 获取页面时，提取每个 Figure 标题和对应的 img src
-2. 下载后**必须验证** — Read 每张图片确认内容正确
-3. 文件 < 10KB 时必须重新检查
+Fetch:
 
-## 多源 fallback 策略
-
-当 arXiv HTML 获取失败或图片不完整时，按顺序尝试：
-
-### 来源 A: arXiv HTML（首选）
-- WebFetch `https://arxiv.org/html/{arxiv_id}` → 提取 `<figure>` 的 img src
-- 先统计论文 Figure 总数，确保提取完整
-
-### 来源 B: 项目主页（补充）
-- 从论文摘要/HTML 中查找项目主页（关键词：`project page`、`github.io`、`our website`）
-- WebFetch 项目主页，提取展示图片（teaser / demo 图）
-- 适合获取 arXiv HTML 中缺失的方法概览图
-
-### 来源 C: PDF 提取（最终 fallback）
-```bash
-wget -O /tmp/paper.pdf "https://arxiv.org/pdf/{arxiv_id}.pdf"
-mkdir -p {笔记所在目录}/assets/
-pdfimages -png /tmp/paper.pdf {笔记所在目录}/assets/{方法名}_fig
+```text
+https://arxiv.org/html/{arxiv_id}
 ```
-提取后验证：文件 >10KB、Read 确认内容正确。
 
-## 选择性本地化（解决外链不可达）
+Extract every `<figure>` block, including caption text and image URLs. Count the extracted figures and compare with the paper's figure count.
 
-arXiv 外链在某些网络环境下不稳定。笔记保存后自动运行可达性检查：
+### Source B: Project Page
+
+Use this when arXiv HTML is unavailable or missing figures.
+Look for project-page links in the abstract, arXiv page, paper footer, GitHub README, or author pages.
+
+### Source C: PDF Extraction (Final Fallback)
 
 ```bash
-python3 ../daily-papers/download_note_images.py "{笔记路径}"
+mkdir -p {note_directory}/assets/
+pdfimages -png /tmp/paper.pdf {note_directory}/assets/{method_name}_fig
 ```
 
-脚本行为：
-- 并发检查所有外链图片的 HTTP 可达性（10s 超时）
-- **可达** → 保持外链不动
-- **不可达** → 下载到 `assets/{方法名}_fig{N}.{ext}`，替换为 `![[...]]` wikilink
-- 下载也失败时，尝试从 PDF 提取对应 figure
-- 有本地化操作时，自动更新 frontmatter `image_source: online` → `mixed`
+Keep only real figures, usually files larger than 10 KB. Ignore logos, icons, and tiny artifacts.
 
-## 图片 URL 规范化（防止路径重复）
+## External Link Reliability
 
-WebFetch 返回的图片路径可能是**相对路径**（如 `2603.05312v1/x1.png`），也可能是**已解析的绝对路径**。
-拼接 URL 时极易出现路径重复 bug（如 `.../2603.05312v1/2603.05312v1/x1.png`）。
+arXiv external image links can be unstable in some network environments. After saving a note, run the reachability check:
 
-**铁律**: 写入笔记前，必须对每个图片 URL 执行以下检查：
-
-1. 如果 URL 已经是 `https://arxiv.org/html/...` 的完整形式，直接使用，不要再拼接
-2. 如果是相对路径，**只用** `https://arxiv.org/html/` 作为 base，不要再加 `{arxiv_id}/`
-   - 因为相对路径通常已经包含 `{arxiv_id}/`（如 `2603.05312v1/x1.png`）
-3. **最终验证**: 检查 URL 中是否存在连续两段相同的 arxiv_id（如 `2603.05312v1/2603.05312v1/`），如果有，删除重复段
-
-示例：
-```
-✗ https://arxiv.org/html/2603.05312v1/2603.05312v1/x1.png  ← 重复了
-✓ https://arxiv.org/html/2603.05312v1/x1.png               ← 正确
+```bash
+python3 ../daily-papers/download_note_images.py "{note_path}"
 ```
 
-## 笔记中的图片引用格式
+The script keeps reachable links unchanged and downloads unreachable links into local `assets/` storage.
 
-**外链**（默认）:
+## URL Cleanup
+
+Before writing any image URL, check for duplicated arXiv ID path segments.
+
+Bad:
+
+```text
+https://arxiv.org/html/2603.05312v1/2603.05312v1/x1.png
+```
+
+Good:
+
+```text
+https://arxiv.org/html/2603.05312v1/x1.png
+```
+
+## Hard Rule
+
+Before writing a note, every image URL must be checked for:
+
+- duplicate path segments
+- obvious 404 patterns
+- missing scheme such as `https://`
+- suspicious tiny local files below 10 KB
+
+## Image Reference Format in Notes
+
+Use standard Markdown images:
+
 ```markdown
-![Figure 1](https://arxiv.org/html/xxxx/x1.png)
+![Figure 1: short caption](https://example.com/figure.png)
 ```
 
-**本地**（外链不可用时的备选）:
+For localized Obsidian assets, use wikilinks when the helper script replaces them:
+
 ```markdown
-![[{方法名}_fig1_overview.png]]
-![[{方法名}_fig1_overview.png|600]]  <!-- 指定宽度 -->
+![[assets/Figure_1.png]]
 ```
 
-## frontmatter 中记录图片来源
+## Frontmatter Image Source
 
-```yaml
----
-image_source: online  # 默认 online；部分图片用本地时填 mixed
-arxiv_id: "2501.12345"
----
-```
+Record image provenance in frontmatter:
+
+- `image_source: online` when all images are external and reachable
+- `image_source: local` when all images are local
+- `image_source: mixed` when both are used

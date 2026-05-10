@@ -1,248 +1,184 @@
 ---
 title: "{Title}"
 method_name: "{MethodName}"
-authors: [{Authors}]
-year: {Year}
-venue: {Venue}
-tags: [{tags}]
-zotero_collection: {zotero_path}
-image_source: online  # online（默认）/ mixed / local
-arxiv_html: {arxiv_html_url}  # 如有
-created: {date}
+authors: []
+year:
+venue:
+tags: []
+zotero_item_id:
+zotero_collection:
+image_source: online
+created: {timestamp}
 ---
 
-# 论文笔记：{Title}
+# Paper Note: {Title}
 
-## 元信息
+## Metadata
 
-| 项目 | 内容 |
-|------|------|
-| 机构 | {Affiliations} |
-| 日期 | {Month Year} |
-| 项目主页 | {project_page_url} |
-| 对比基线 | [[{baseline_paper}]] |
-| 链接 | [arXiv]({arxiv_url}) / [Code]({code_url}) |
+| Field | Value |
+|---|---|
+| Title | {Title} |
+| Method / Model | {MethodName} |
+| Authors |  |
+| Venue / Year |  |
+| Links |  |
 
----
+## One-Sentence Summary
 
-## 一句话总结
+State the core idea and why it matters in one precise sentence.
 
-> {用一句话概括这篇论文的核心贡献，不超过50字}
+## Problem and Motivation
 
----
+### Problem
 
-## 核心贡献
+Explain the concrete problem the paper solves.
 
-1. **{贡献1标题}**: {简要说明}
-2. **{贡献2标题}**: {简要说明}
-3. **{贡献3标题}**: {简要说明}
+### Why Existing Methods Are Not Enough
 
----
+Name the bottlenecks, assumptions, data limitations, or evaluation gaps.
 
-## 问题背景
+### Paper Motivation
 
-### 要解决的问题
-{这篇论文要解决什么问题？}
+Explain why the proposed direction is reasonable or necessary.
 
-### 现有方法的局限
-{之前的方法有什么不足？}
+## Core Contributions
 
-### 本文的动机
-{为什么作者认为他们的方法能解决这个问题？}
+1. **Contribution 1**:
+2. **Contribution 2**:
+3. **Contribution 3**:
 
----
+## Method Details
 
-## 方法详解
+### Overall Architecture
 
-### 模型架构
+Describe the pipeline with structured Markdown. Do not use ASCII flowcharts.
 
-<!-- 使用 [[概念]] 内联链接所有技术术语 -->
+### Inputs and Outputs
 
-{方法名} 采用 **{架构类型}** 架构：
-- **输入**: 语言指令 $l$ + 观测 $o_t$ + 状态 $s_t$
-- **Backbone**: {使用的主干网络}
-- **核心模块**: [[{核心技术1}]] 用于 [[{核心技术2}]]
-- **输出**: [[Action Chunking|动作块]] $a_{t:t+k}$
-- **总参数**: {参数量}
+- **Input**:
+- **Output**:
+- **Training signal**:
 
-### 核心模块
+### Key Components
 
-#### 模块1: {名称}
+#### Component 1
 
-**设计动机**: 利用 [[{相关概念}]] 实现 {目标}
+Explain purpose, inputs, outputs, and how it interacts with the rest of the system.
 
-**具体实现**:
-- 使用 [[{技术A}]] 进行 {处理1}
-- 通过 [[{技术B}]] 实现 {处理2}
+#### Component 2
 
-#### 模块2: {名称}
+Explain purpose, inputs, outputs, and how it interacts with the rest of the system.
 
-{同上格式，注意内联概念链接}
+## Key Formulas
 
----
+Every important equation from the paper must be included here. Each formula must have a name, LaTeX block, meaning, and symbol explanation.
 
-## 关键公式
-
-<!-- 公式标题使用 [[概念|名称]] 格式链接到概念库 -->
-
-### 公式1: [[{概念名}|{公式用途}]]
+### [[Concept|Formula Name]]
 
 $$
-{公式内容}
+L = L_{task} + \lambda L_{reg}
 $$
 
-**含义**: {一句话解释公式的作用}
+- **Meaning**:
+- **Symbols**:
+  - `$L_{task}$`:
+  - `$\lambda$`:
+  - `$L_{reg}$`:
 
-**符号说明**:
-- $\tau \sim \mathcal{U}(0, 1)$: {含义}
-- ${符号2}$: {含义}
+## Algorithms / Pseudocode
 
-### 公式2: [[{概念名}]] 损失
+Use numbered steps or pseudocode when the paper includes an algorithm.
 
-$$
-\mathcal{L}_{total} = \lambda_1 \mathcal{L}_{task} + \lambda_2 \mathcal{L}_{reg}
-$$
+## Figures
 
-**含义**: {损失函数的整体作用}
+All figures from the paper must be included. Use external image URLs when reliable, or local assets when external links fail.
 
-**符号说明**:
-- $\lambda_1, \lambda_2$: 权重系数
-- $\mathcal{L}_{task}$: {任务损失作用}
-- $\mathcal{L}_{reg}$: {正则项作用}
+### Figure 1: Title
 
-### 公式3: 采样/推理过程
+![Figure 1](URL_OR_LOCAL_PATH)
 
-$$
-{推理公式}
-$$
+- **What it shows**:
+- **Why it matters**:
 
-**含义**: {推理过程说明}
+### Figure 2: Title
 
-{... 列出论文中所有重要公式 ...}
+![Figure 2](URL_OR_LOCAL_PATH)
 
----
+- **What it shows**:
+- **Why it matters**:
 
-## 关键图表
+## Tables
 
-<!-- 图片：下载到本地 assets/ 文件夹，用 ![[]] wikilink 嵌入 -->
-<!-- 命名规范: {方法名}_fig{N}_{英文描述}.png -->
-<!-- 下载后必须验证：文件 >10KB、Read 确认内容正确 -->
+All important tables must be preserved or summarized faithfully.
 
-### Figure 1: Overview / 系统概览
+| Table | What It Measures | Key Takeaway |
+|---|---|---|
+|  |  |  |
 
-![[{MethodName}_fig1_overview.png]]
+## Experimental Results
 
-**说明**: {方法名} 的整体架构。输入 {输入内容}，通过 [[{核心技术}]] 处理，输出 {输出内容}。
+### Datasets
 
-### Figure 2: Model Architecture / 模型架构
+| Dataset | Size | Task | Notes |
+|---|---|---|---|
+|  |  |  |  |
 
-![[{MethodName}_fig2_architecture.png]]
+### Baselines
 
-**说明**: 展示 [[{模块名}]] 的详细结构。{核心设计点}。
+List compared methods and whether they are direct baselines, prior components, or borrowed techniques.
 
-### Figure 3: Experiment Results / 实验结果
+### Main Results
 
-![[{MethodName}_fig3_results.png]]
+Summarize the numbers that actually support the claim.
 
-**说明**: {实验的关键发现}，{方法名} 在 {指标} 上超越 baseline {百分比}。
+### Ablations
 
-### Table 1: {表格标题}
+Describe what changed, what metric moved, and what that proves.
 
-| Method | Metric1 | Metric2 | Metric3 |
-|--------|---------|---------|---------|
-| Baseline1 | x.xx | x.xx | x.xx |
-| Baseline2 | x.xx | x.xx | x.xx |
-| **Ours** | **x.xx** | **x.xx** | **x.xx** |
+## Critical Analysis
 
-**说明**: {表格的关键发现}
+### Strengths
 
-### Table 2: 消融实验
+- 
 
-| 配置 | Metric | 说明 |
-|------|--------|------|
-| w/o Module A | x.xx | {影响分析} |
-| w/o Module B | x.xx | {影响分析} |
-| Full Model | x.xx | - |
+### Limitations
 
-**关键发现**: {消融实验最重要的结论}
+- 
 
-{... 列出论文中所有重要图表 ...}
+### Hidden Assumptions
 
----
+- 
 
-## 实验
+### What Would Make This Stronger
 
-### 数据集
+- 
 
-| 数据集 | 规模 | 特点 | 用途 |
-|--------|------|------|------|
-| {Dataset1} | {size} | {特点} | 训练/测试 |
-| {Dataset2} | {size} | {特点} | 测试 |
+## Related Notes
 
-### 实现细节
+### Builds On
 
-- **Backbone**: {使用的骨干网络}
-- **优化器**: {Adam/SGD, 学习率}
-- **Batch Size**: {大小}
-- **训练轮数**: {epochs}
-- **硬件**: {GPU 型号和数量}
+- [[Concept or Paper]]:
 
-### 可视化结果
+### Compared With
 
-{定性结果的关键观察}
+- [[Concept or Paper]]:
 
----
+### Method-Related
 
-## 批判性思考
+- [[Concept]]:
 
-### 优点
-1. {优点1}
-2. {优点2}
-3. {优点3}
+### Data / Evaluation Related
 
-### 局限性
-1. {局限1}
-2. {局限2}
+- [[Dataset or Benchmark]]:
 
-### 潜在改进方向
-1. {改进方向1}
-2. {改进方向2}
+## Representative Work for New Concepts
 
-### 可复现性评估
-- [ ] 代码开源
-- [ ] 预训练模型
-- [ ] 训练细节完整
-- [ ] 数据集可获取
+List new concept notes that should mention this paper as representative work.
 
----
+- [[Concept]]: why this paper is representative
 
-## 关联笔记
+## Follow-Up Reading
 
-### 基于
-- [[{前置工作1}]]: {说明}
-- [[{前置工作2}]]: {说明}
+- 
 
-### 对比
-- [[{对比方法1}]]: {为什么对比}
-- [[{对比方法2}]]: {为什么对比}
-
-### 方法相关
-- [[{核心技术1}]]: 核心方法
-- [[{核心技术2}]]: 重要组件
-
-### 硬件/数据相关
-- [[{硬件或数据集}]]: {说明}
-
----
-
-## 速查卡片
-
-> [!summary] {Paper Title}
-> - **核心**: {一句话核心}
-> - **方法**: {关键方法}
-> - **结果**: {主要结果}
-> - **代码**: {GitHub链接}
-
----
-
-*笔记创建时间: {timestamp}*
+*Note created: {timestamp}*

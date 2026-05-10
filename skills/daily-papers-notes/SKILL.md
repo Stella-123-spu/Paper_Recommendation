@@ -1,221 +1,227 @@
 ---
 name: daily-papers-notes
 description: |
-  论文笔记生成（3 步流水线的第 3 步）。补充概念库，为推荐论文生成完整笔记，
-  链接回填到推荐文件；目录页默认自动刷新，git 自动化默认关闭。
+  Paper note generation, step 3 of the three-step pipeline. Extends the concept library,
+  generates full notes for recommended papers, backfills note links into the recommendation file,
+  and refreshes index pages by default. Git automation is disabled by default.
 
-  触发词："批量笔记"、"跑一下论文笔记"
+  Trigger phrases: "generate paper notes", "run paper notes".
 ---
 
-> **开始前**: 先说一声 "开始整理笔记 📝" 并告知今天日期。
+> **Before starting**: say "Starting paper-note organization" and state today's date.
 
-# 论文笔记 (Concepts + Notes + Backfill)
+# Paper Notes (Concepts + Notes + Backfill)
 
-你是 用户的论文笔记系统（3 步流水线的第 3 步）。补充概念库 → 生成论文笔记 → 链接回填 → 刷新目录页。
+You are the user's paper-note system, step 3 of the three-step pipeline. Extend concept library -> generate paper notes -> backfill links -> refresh index pages.
 
-## Step 0: 读取共享配置
+## Step 0: Read Shared Config
 
-先读取唯一共享配置 `../_shared/user-config.json`。不要再查找或假设第二个 override 配置文件。
+First read the only shared config file: `../_shared/user-config.json`. Do not search for or assume a second override config file.
 
-显式生成并在后续统一使用这些变量：
+Explicitly create and use these variables throughout the rest of the workflow:
 
 - `VAULT_PATH`
+- `DAILY_PAPERS_PATH`
 - `NOTES_PATH`
 - `CONCEPTS_PATH`
-- `DAILY_PAPERS_PATH`
+- `NOTE_TEMPLATE = ../daily-papers-notes/paper-note-template.md`
 - `DOMAIN_NAME`
 - `DOMAIN_SUMMARY`
 - `DOMAIN_FOCUS_THEMES`
 - `DOMAIN_RELATED_THEMES`
 - `PAPER_NOTES_TAXONOMY`
-- `NOTE_TEMPLATE = ../daily-papers-notes/论文笔记模板.md`
 - `AUTO_REFRESH_INDEXES`
 - `GIT_COMMIT_ENABLED`
 - `GIT_PUSH_ENABLED`
-- `ENRICHED_INPUT = /tmp/daily_papers_enriched.json`
 
-其中：
+Where:
 
+- `DAILY_PAPERS_PATH = {VAULT_PATH}/{daily_papers_folder}`
 - `NOTES_PATH = {VAULT_PATH}/{paper_notes_folder}`
 - `CONCEPTS_PATH = {NOTES_PATH}/{concepts_folder}`
-- `DAILY_PAPERS_PATH = {VAULT_PATH}/{daily_papers_folder}`
-- `DOMAIN_*` 来自配置的 `domain` 段
-- `PAPER_NOTES_TAXONOMY` 来自配置的 `paper_notes_taxonomy` 段
-- `GIT_PUSH_ENABLED` 只有在 `GIT_COMMIT_ENABLED=true` 时才可能为真
+- `DOMAIN_*` come from the `domain` section of config
+- `PAPER_NOTES_TAXONOMY` comes from the `paper_notes_taxonomy` section of config
+- `GIT_PUSH_ENABLED` can only be true when `GIT_COMMIT_ENABLED=true`
 
-后续步骤统一使用上面的变量。
+Use the variables above for all subsequent steps.
 
-概念补充、论文笔记重点和链接回填的主题判断也统一以共享配置为准，不要沿用过时的默认语境。
+Concept expansion, paper-note focus, and link backfill decisions must all use the shared config. Do not carry forward stale default domain context.
 
-## 前置检查
+## Prerequisite Checks
 
-1. 检查 `/tmp/daily_papers_enriched.json` 是否存在
-2. 检查今天的推荐文件 `{DAILY_PAPERS_PATH}/YYYY-MM-DD-论文推荐.md` 是否存在
-3. 如果任一不存在，告知用户需要先运行前置步骤，然后停止
+1. Check whether `/tmp/daily_papers_enriched.json` exists.
+2. Check whether today's recommendation file `{DAILY_PAPERS_PATH}/YYYY-MM-DD-paper-recommendations.md` exists.
+3. If either file is missing, tell the user which prior step must run first, then stop.
 
-## 工作流程
+## Workflow
 
-### Step 1: 概念库补充
+### Step 1: Extend the Concept Library
 
-**1a: 提取概念列表**
-1. 扫描今天的推荐文件，提取所有 `[[...]]` 链接
-2. 额外从 `/tmp/daily_papers_enriched.json` 的 `method_names` 列表中提取所有方法名
-3. 合并去重
+**1a: Extract concept list**
 
-**1b: 过滤**
-只保留以下类型的术语（跳过通用词、论文自身名称、公司名、人名）：
-- 方法/模型名（如 Q-Former, Parseval Regularization, CVAE, PCM）
-- 数据集名（如 MIMIC-IV, eICU, PhysioNet, UK Biobank）
-- 框架/基准名（如 Med-PaLM, BEHRT, RETAIN, CLMBR）
-- 技术概念名（如 counterfactual inference, temporal abstraction, intervention modeling）
+1. Scan today's recommendation file and extract every `[[...]]` link.
+2. Also extract every method name from the `method_names` lists in `/tmp/daily_papers_enriched.json`.
+3. Merge and deduplicate.
 
-**1c: 创建缺失的概念笔记（自动归类）**
-检查 `{CONCEPTS_PATH}/` 下是否已存在（搜索所有子目录）。对于缺失的概念，**根据概念类型自动归类到对应子目录**，不要全扔 `0-uncategorized/`。
+**1b: Filter**
 
-分类规则见 `../paper-reader/references/concept-categories.md`，其主题目录与优先级都以共享配置里的 `paper_notes_taxonomy` 为准。
+Keep only these term types, skipping generic words, paper titles, company names, and people names:
 
-概念笔记模板见 `../paper-reader/references/concept-categories.md`
+- method/model names, such as Q-Former, Parseval Regularization, CVAE, PCM
+- dataset names, such as MIMIC-IV, eICU, PhysioNet, UK Biobank
+- framework/benchmark names, such as Med-PaLM, BEHRT, RETAIN, CLMBR
+- technical concepts, such as counterfactual inference, temporal abstraction, intervention modeling
 
-### Step 2: 论文笔记生成
+**1c: Create missing concept notes with automatic categorization**
 
-为推荐论文生成完整论文笔记：
+Check whether each concept already exists anywhere under `{CONCEPTS_PATH}/`. For missing concepts, **automatically categorize them into the appropriate subdirectory based on concept type**. Do not put everything into `0-uncategorized/`.
 
-1. 从今天的推荐文件中，读取分流表，筛选出标记为"必读"的论文
-2. **兜底规则**：如果今天分流表里没有"必读"，不要让 `PaperNotes/` 空着。此时从"值得看"中按出现顺序挑选前 1-2 篇作为今天的重点论文，照常生成完整笔记。
-3. **必须使用 subagents 并行执行**，不要写 Python 包装脚本代替：
-   - 为每篇需要生成的论文 `spawn_agent`
-   - `spawn_agent` 时模型固定使用 `gpt-5.4-mini`
-   - 每个 subagent 只负责 **1 篇论文 + 1 个目标笔记文件**
-   - 明确告诉 subagent：代码库里不止它一个，不要回滚别人改动；它的职责只是调用 `paper-reader` skill 生成该论文笔记
-   - 若论文数 > 1，优先并行生成，而不是串行一篇篇慢跑
-   - 只有在拿到 subagent 结果后，主线程再统一做质量检查、回填链接、刷新索引
-4. **质量检查已有笔记**（不是只看文件是否存在）：
-   - 对已有 `📒 **笔记**` 标记的论文，用 Glob 找到对应笔记文件，检查行数
-   - **行数 < 100 的视为骨架笔记，必须重新生成**（删除旧文件，重新调用 paper-reader）
-   - 行数 >= 100 且包含 `## 关键公式` 和 `## 关键图表` 的才算合格，可以跳过
-5. 对每篇需要生成/重新生成的论文，让对应的 subagent 调用 `paper-reader` skill（优先传入抓取结果里的 `url`；若有 DOI 也可一并提供）
-6. 笔记生成后，paper-reader 会自动补充概念库，无需重复
-7. 如果用户提供了 Obsidian 笔记模板，或当前 skill 已配置 `NOTE_TEMPLATE`，则 subagent 必须把该模板作为最终成稿骨架；可以补充 `paper-reader` 要求的公式、图片、表格和概念链接，但不要偏离模板主结构
+Categorization rules are in `../paper-reader/references/concept-categories.md`. topic directories and priority are defined by `paper_notes_taxonomy` in the shared config.
 
-#### subagent 执行模板
+The concept-note template is also in `../paper-reader/references/concept-categories.md`.
 
-给每个 subagent 的任务里，至少包含这些信息：
+### Step 2: Generate Paper Notes
 
-- 论文标题
-- 论文链接（优先 `url`，必要时补充 DOI）
-- 目标根目录：`{NOTES_PATH}`
-- 模板路径：`{NOTE_TEMPLATE}`
-- 约束：必须使用 `paper-reader` skill；必须写出真实论文笔记，不能只更新 `_index.md` 之类的目录页
-- 模型要求：subagent 使用 `gpt-5.4-mini`
-- 协作提醒：你不是唯一在工作的 agent，不要回滚他人更改；只负责这 1 篇论文
+Generate full paper notes for recommended papers:
 
-推荐发给 subagent 的话术类似：
+1. Read the triage table from today's recommendation file and select papers marked as "Must Read".
+2. **Fallback rule**: if today's triage table has no "Must Read" papers, do not leave `PaperNotes/` empty. Select the first 1-2 "Worth Reading" papers in order as today's focus papers and generate full notes for them.
+3. **Must use subagents in parallel**. Do not replace this with a Python wrapper script:
+   - call `spawn_agent` for each paper that needs a note
+   - use model `gpt-5.4-mini` for every `spawn_agent`
+   - each subagent is responsible for exactly **1 paper + 1 target note file**
+   - explicitly tell each subagent that it is not alone in the codebase, must not revert others' changes, and should only invoke the `paper-reader` skill for that paper note
+   - if there is more than one paper, prefer parallel note generation over slow serial processing
+   - only after subagent results return should the main thread perform quality checks, link backfill, and index refresh
+4. **Quality-check existing notes**, not just file existence:
+   - for papers already marked with `📒 **Note**`, use Glob to find the corresponding note file and count lines
+   - files with fewer than 100 lines are skeleton notes and must be regenerated by deleting the old file and invoking `paper-reader` again
+   - files with at least 100 lines and both `## Key Formulas` and `## Key Figures` are qualified and may be skipped
+5. For each paper needing generation or regeneration, have the subagent call the `paper-reader` skill, preferably passing the fetched `url`; include DOI too if available.
+6. After a note is generated, `paper-reader` will handle concept-library additions automatically; do not duplicate that work.
+7. If the user provided an Obsidian note template, or this skill's `NOTE_TEMPLATE` is configured, the subagent must use that template as the final draft skeleton. It may add formulas, images, tables, and concept links required by `paper-reader`, but must not deviate from the template's main structure.
+
+#### Subagent Execution Template
+
+Each subagent task must include at least:
+
+- paper title
+- paper link, preferring `url` and adding DOI when needed
+- target root directory: `{NOTES_PATH}`
+- template path: `{NOTE_TEMPLATE}`
+- constraints: must use the `paper-reader` skill; must write a real paper note, not only update `_index.md` or another index page
+- model requirement: use `gpt-5.4-mini`
+- collaboration reminder: you are not the only agent working; do not revert others' changes; only handle this one paper
+
+Recommended prompt wording for each subagent:
 
 ```text
-请处理这 1 篇论文，不要处理别的论文。你不是独自在代码库里工作，不要回滚他人的改动。
-必须使用 [$paper-reader](../paper-reader/SKILL.md) skill 生成完整论文笔记。
-请使用 gpt-5.4-mini。
-论文：{标题}
-链接：{论文 URL / DOI}
-模板：{NOTE_TEMPLATE}
-输出要求：把真实笔记写到 {NOTES_PATH} 下，不要只更新目录页；最终结构以模板为骨架，同时保留 paper-reader 要求的完整内容；完成后回复最终笔记路径。
+Please process exactly this one paper and no other papers. You are not alone in the codebase; do not revert other people's changes.
+You must use the [$paper-reader](../paper-reader/SKILL.md) skill to generate a full paper note.
+Please use gpt-5.4-mini.
+Paper: {title}
+Link: {paper URL / DOI}
+Template: {NOTE_TEMPLATE}
+Output requirements: write the real note under {NOTES_PATH}; do not only update index pages. Use the template as the final structural skeleton while preserving the full content required by paper-reader. When done, reply with the final note path.
 ```
 
-> **铁律**：不论论文数量多少，"必读"的论文**全部**生成笔记，一篇不能少。
-> 耗时长是正常的，不是偷懒的理由。如果 context 接近上限，先把已完成内容落盘；
-> 只有在 `GIT_COMMIT_ENABLED=true` 时才允许做阶段性 commit。然后告知用户剩余论文需要在新会话中继续，**绝对不能默默跳过**。
+> **Hard rule**: regardless of paper count, every "Must Read" paper gets a note. Do not skip any.
+> Long runtime is normal and is not an excuse to cut corners. If context is close to the limit, first write completed content to disk.
+> Only make interim commits when `GIT_COMMIT_ENABLED=true`. Then clearly tell the user how many papers remain and that they need to continue in a new session. Never silently skip papers.
 
-#### ⚠️ 笔记质量硬性要求
+#### Note Quality Requirements
 
-**绝对禁止自己手写简化版笔记。每篇论文必须通过 `paper-reader` skill 生成。**
-不要因为"怕 context overflow"或"论文太多"就自己写个 70 行的骨架糊弄过去。
-如果当前会话上下文接近上限，可以开启新的 Codex 会话继续剩余论文；但不能跳过任何一篇必读论文。
+**Never hand-write a simplified note yourself. Every paper note must be generated through the `paper-reader` skill.**
+Do not write a 70-line skeleton because of context concerns or because there are many papers.
+If the current session is close to the context limit, start a new Codex session for remaining papers; do not skip any Must Read paper.
 
-笔记质量由 paper-reader skill 自身保证（模板、公式、图片、概念链接等规则均在 paper-reader 中定义）。
-如果同时存在用户模板与 paper-reader 默认模板，优先以用户模板为最终章节骨架，再补齐 paper-reader 的质量要件。
+Note quality is guaranteed by the `paper-reader` skill itself, including template, formulas, images, and concept links.
+If both a user template and the default `paper-reader` template exist, use the user template as the final section skeleton, then fill in the `paper-reader` quality requirements.
 
-#### 🔍 生成后质量验证（每篇必须执行）
+#### Post-Generation Quality Verification (Required for Every Note)
 
-每篇笔记生成后，立即验证：
-1. 文件行数 >= 120（低于此值说明内容不完整）
-2. 包含 `$$` 或 `$` LaTeX 公式（至少 2 处）
-3. 包含 `![` 图片引用（至少 1 张）
-4. 包含 `## 关键公式` 和 `## 实验结果` section header
-5. 如果任一条件不满足，**删除文件并重新生成**
+Immediately verify each generated note:
 
-### Step 3: 笔记链接回填
+1. file has at least 120 lines, otherwise it is incomplete
+2. contains LaTeX formulas with `$$` or `$` at least twice
+3. contains at least one image reference with `![`
+4. contains `## Key Formulas` and `## Experimental Results` section headers
+5. if any condition fails, **delete the file and regenerate it**
 
-论文笔记全部生成完成后，将笔记链接回填到当天的推荐文件中。
+### Step 3: Backfill Note Links
 
-**3a: 收集已有笔记**
+After all paper notes are generated, backfill note links into the day's recommendation file.
 
-用 Glob 扫描 `{NOTES_PATH}/` 下所有子目录（跳过 `{CONCEPTS_PATH}`），获取所有 `.md` 文件列表，建立 `{文件名(不含.md): 相对路径}` 的索引。
+**3a: Collect existing notes**
 
-**3b: 匹配论文与笔记**
+Use Glob to scan all subdirectories under `{NOTES_PATH}/`, skipping `{CONCEPTS_PATH}`, and collect every `.md` file. Build an index of `{file name without .md: relative path}`.
 
-读取当天推荐文件 `{DAILY_PAPERS_PATH}/YYYY-MM-DD-论文推荐.md`，对每篇论文（`### N.` 开头的段落）：
+**3b: Match papers and notes**
 
-1. 从论文标题中提取方法名/模型名（通常是标题冒号前的缩写，如 "DM0"、"BPP"、"PA3FF"）
-2. 与 3a 的笔记索引匹配（不区分大小写）
-3. 也检查富化数据的 `method_names`（如果有残留数据）
+Read today's recommendation file `{DAILY_PAPERS_PATH}/YYYY-MM-DD-paper-recommendations.md`. For each paper section beginning with `### N.`:
 
-**3c: 插入笔记链接**
+1. extract the method/model name from the paper title, usually the abbreviation before the colon, such as "DM0", "BPP", or "PA3FF"
+2. match it against the note index from 3a, case-insensitively
+3. also check `method_names` from enriched data if residual data is available
 
-对匹配到笔记的论文，在 `- **来源**:` 行之后插入一行：
+**3c: Insert note links**
+
+For each matched paper, insert this line immediately after the `- **Source**:` line:
 
 ```markdown
-- 📒 **笔记**: [[笔记名]]
+- 📒 **Note**: [[Note Name]]
 ```
 
-其中 `笔记名` 是不含 `.md` 后缀的文件名（Obsidian 会自动解析到正确路径）。
+Where `Note Name` is the file name without the `.md` suffix. Obsidian will resolve it to the correct path automatically.
 
-- 如果该论文已有 `📒 **已有笔记**` 或 `📒 **笔记**` 行，跳过不重复添加
-- 使用 Edit 工具逐篇插入，确保不破坏文件其他内容
+- If the paper already has a `📒 **Existing Note**` or `📒 **Note**` line, skip it and do not add a duplicate
+- Use the Edit tool to insert links paper by paper so no other file content is damaged
 
-### Step 4: 刷新 MOC 索引
+### Step 4: Refresh MOC Indexes
 
-只有在 `AUTO_REFRESH_INDEXES=true` 时才执行：
+Run only when `AUTO_REFRESH_INDEXES=true`:
 
 ```bash
 python3 ../_shared/generate_concept_mocs.py
 python3 ../_shared/generate_paper_mocs.py
 ```
 
-默认配置下这个开关是开启的，所以新增的概念和论文笔记通常会自动反映到各分类目录页中。
+This setting is enabled by default, so new concepts and paper notes normally appear in category index pages automatically.
 
-### Step 5: Git 提交
+### Step 5: Git Commit
 
-仅当 `GIT_COMMIT_ENABLED=true` 时执行，并且必须先检查：
+Run only when `GIT_COMMIT_ENABLED=true`, and first check:
 
-1. `VAULT_PATH/.git` 存在
-2. `git add -A` 后确实有 staged changes
+1. `VAULT_PATH/.git` exists
+2. after `git add -A`, staged changes actually exist
 
-满足条件后才 commit：
+Only then commit:
 
 ```bash
-cd {VAULT_PATH} && git add -A && git commit -m "daily papers: notes YYYY-MM-DD"
+cd {VAULT_PATH} && git add -A && git commit -m "daily paper notes: YYYY-MM-DD"
 ```
 
-只有在 `GIT_PUSH_ENABLED=true` 且仓库已配置远端时才 push。
+Only push when `GIT_PUSH_ENABLED=true` and a remote is configured.
 
-## 输出
+## Output
 
-完成后告知用户：
-- 创建了多少个新概念
-- 生成了多少篇论文笔记
-- 回填了多少个笔记链接
-- 流水线全部完成
+When finished, tell the user:
 
-## 注意事项
+- how many new concepts were created
+- how many paper notes were generated
+- how many note links were backfilled
+- that the full pipeline is complete
 
-- 如果前置文件不存在，必须先运行前面的步骤
-- `paper-reader` skill 会自动处理概念库补充，不要重复创建
-- 优先为"必读"论文生成笔记；如果当天没有"必读"，必须从"值得看"里补 1-2 篇重点论文，不能让 `PaperNotes/` 只剩目录页
-- 默认自动刷新目录页，但默认不做 git commit / push
-- **绝对禁止**以下偷懒行为：
-  - 自己手写 70 行骨架笔记代替 paper-reader 输出
-  - 用 Python 脚本包装 `codex exec` 来批量替代 subagents
-  - 以"context overflow"为由跳过论文不生成笔记
-  - 看到文件已存在就跳过，不检查质量
-  - 生成笔记后不做质量验证
-- 如果 context 真的接近上限：先保存已完成的笔记；只有在 `GIT_COMMIT_ENABLED=true` 时才 commit。然后**明确告知用户**还有 N 篇未完成，需要在新会话中运行 `跑一下论文笔记` 继续。绝不能默默跳过
+## Notes
+
+- If prerequisite files are missing, earlier steps must run first
+- The `paper-reader` skill automatically handles concept-library additions; do not duplicate them
+- Prioritize notes for "Must Read" papers. If no paper is marked "Must Read" today, generate notes for the first 1-2 "Worth Reading" focus papers so `PaperNotes/` is not left with only index pages
+- Index pages refresh automatically by default, but git commit/push is disabled by default
+- **Never do these shortcut behaviors:**
+  - hand-write a 70-line skeleton note instead of `paper-reader` output
+  - use a Python wrapper around `codex exec` to replace subagents in bulk
+  - skip papers because of "context overflow"
+  - skip existing files without checking quality
+  - skip quality verification after generating notes
+- If context really is close to the limit: first save completed notes. Only commit if `GIT_COMMIT_ENABLED=true`. Then **clearly tell the user** there are N unfinished papers and that they need to run `generate paper notes` in a new session to continue. Never silently skip them

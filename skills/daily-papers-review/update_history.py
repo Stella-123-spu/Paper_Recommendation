@@ -8,7 +8,7 @@ Usage:
     python3 update_history.py --paper-ids ID1 ID2 ... --date YYYY-MM-DD
     python3 update_history.py --arxiv-ids ID1 ID2 ... --date YYYY-MM-DD
     python3 update_history.py --from-enriched /tmp/daily_papers_enriched.json --date YYYY-MM-DD
-    python3 update_history.py --from-recommendation YYYY-MM-DD-论文推荐.md --date YYYY-MM-DD
+    python3 update_history.py --from-recommendation YYYY-MM-DD-paper-recommendations.md --date YYYY-MM-DD
 
     # Cross-platform (auto-detect paths)
     python3 update_history.py --date 2026-03-17

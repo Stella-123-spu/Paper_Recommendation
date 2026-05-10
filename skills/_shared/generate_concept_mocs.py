@@ -19,8 +19,8 @@ def main() -> int:
     summary = build_tree_mocs(
         vault_root=obsidian_vault_path(),
         root_dir=concepts_dir(),
-        title_prefix="概念目录页",
-        intro="用于浏览概念笔记和对应分类入口。",
+        title_prefix="Concept Index",
+        intro="Use this page to browse concept notes and category entry points.",
     )
     print(json.dumps(summary.to_dict(), ensure_ascii=False, indent=2))
     return 0

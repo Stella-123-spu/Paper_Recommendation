@@ -1,43 +1,45 @@
 ---
 name: daily-papers
 description: |
-  每日论文推荐的一句话总入口。用户说“今日论文推荐”“过去3天论文推荐”“过去一周论文推荐”
-  “最近3天论文”“看看这周有啥论文”时使用。
+  One-prompt entry point for daily paper recommendations. Use when the user asks for
+  "today's paper recommendations", "paper recommendations from the last 3 days",
+  "paper recommendations from the last week", "recent papers", or "what papers are worth reading this week".
 
-  内部会自动串联论文抓取、推荐生成、重点论文笔记三步，无需用户手动拆开。
-  抓取源默认覆盖 HuggingFace、arXiv、PubMed、bioRxiv、medRxiv，并在推荐前统一去重。
+  Internally chains the three-step pipeline: paper fetching, recommendation review,
+  and focused paper-note generation. The user does not need to run each step manually.
+  Default sources cover Hugging Face, arXiv, PubMed, bioRxiv, and medRxiv, with unified deduplication before review.
 ---
 
-# 每日论文推荐
+# Daily Paper Recommendations
 
-这是面向用户的一句话入口。对用户来说，正常只需要说一次：
+This is the user-facing one-prompt entry point. Normally, the user only needs to ask once:
 
-- `今日论文推荐`
-- `过去3天论文推荐`
-- `过去一周论文推荐`
+- `today's paper recommendations`
+- `paper recommendations from the last 3 days`
+- `paper recommendations from the last week`
 
-## 执行原则
+## Execution Rules
 
-1. 先识别时间范围：
-   - `今日论文推荐`、`每日推荐`、`今日论文` -> 当天
-   - `过去3天论文推荐`、`最近3天论文` -> 3 天
-   - `过去一周论文推荐`、`看看这周有啥论文` -> 7 天
-2. 自动调用 `daily-papers-fetch` skill。
-3. 第 1 步完成后，自动调用 `daily-papers-review` skill。
-4. 第 2 步完成后，自动调用 `daily-papers-notes` skill。
-5. 全部完成后，用一句话告诉用户：
-   - 推荐文件已生成
-   - 重点论文笔记已生成多少篇
-   - 目录页是否已自动刷新
-6. 论文主题、筛选方向、点评重心统一以唯一配置文件 `../_shared/user-config.json` 为准，不要在任何 skill 里再维护第二套研究主题。
+1. First identify the time range:
+   - `today's paper recommendations`, `daily paper recommendations`, `today's papers` -> today
+   - `paper recommendations from the last 3 days`, `recent papers from the last 3 days` -> 3 days
+   - `paper recommendations from the last week`, `what papers are worth reading this week` -> 7 days
+2. Automatically invoke the `daily-papers-fetch` skill.
+3. After step 1 completes, automatically invoke the `daily-papers-review` skill.
+4. After step 2 completes, automatically invoke the `daily-papers-notes` skill.
+5. When everything is complete, tell the user in one sentence:
+   - the recommendation file was generated
+   - how many focused paper notes were generated
+   - whether index pages were refreshed automatically
+6. Paper topics, filtering direction, and review emphasis must all come from the single config file `../_shared/user-config.json`. Do not maintain a second research-topic definition in any skill.
 
-## 重要约束
+## Important Constraints
 
-- 不要先要求用户手动跑 `跑一下论文抓取 / 点评 / 笔记`。
-- 这 3 句是内部流水线和调试入口，不是首页主交互。
-- 如果用户明确只想跑其中一步，再交给对应 skill。
+- Do not ask the user to manually run `fetch papers / review papers / generate paper notes` first.
+- Those three prompts are internal pipeline and debugging entry points, not the main home interaction.
+- If the user explicitly wants to run only one step, hand off to the corresponding skill.
 
-## 自动化
+## Automation
 
-- 本 skill 本身就是“一步跑完整流水线”的入口。
-- 如果用户想做本地定时任务，默认也应该触发这一句，而不是写死三条内部命令。
+- This skill is itself the "run the full pipeline in one step" entry point.
+- If the user wants a local scheduled task, default to triggering this one prompt rather than hard-coding the three internal commands.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Zotero 数据库查询辅助脚本
-用于 paper-reader skill 的 Zotero 集成
+Zotero database query helper script
+Used by the paper-reader skill for Zotero integration
 """
 
 import sqlite3
@@ -17,7 +17,7 @@ if str(_SHARED_DIR) not in sys.path:
 
 from user_config import zotero_db_path, zotero_storage_dir
 
-# 默认配置
+# Default config
 ZOTERO_DB = zotero_db_path()
 STORAGE_DIR = zotero_storage_dir()
 ZOTERO_DIR = ZOTERO_DB.parent
@@ -25,25 +25,25 @@ TEMP_DB = Path("/tmp/zotero_readonly.sqlite")
 
 
 def copy_db():
-    """复制数据库以避免锁定"""
+    """Copy the database to avoid locking"""
     shutil.copy(ZOTERO_DB, TEMP_DB)
     return sqlite3.connect(TEMP_DB)
 
 
 def get_all_child_collections(conn, collection_id: int) -> list[int]:
-    """递归获取所有子分类ID（包含自身）"""
+    """Recursively get all child collection IDs, including itself"""
     cursor = conn.cursor()
     cursor.execute("SELECT collectionID, parentCollectionID FROM collections")
     all_collections = cursor.fetchall()
 
-    # 构建父子关系映射
+    # Build parent-child relationship map
     children_map = {}
     for cid, parent_id in all_collections:
         if parent_id not in children_map:
             children_map[parent_id] = []
         children_map[parent_id].append(cid)
 
-    # 递归收集所有子分类
+    # Recursively collect all child collections
     result = [collection_id]
     def collect_children(cid):
         if cid in children_map:
@@ -56,7 +56,7 @@ def get_all_child_collections(conn, collection_id: int) -> list[int]:
 
 
 def list_collections(conn):
-    """列出所有分类"""
+    """List all collections"""
     cursor = conn.cursor()
     cursor.execute("""
         SELECT c.collectionID, c.collectionName, c.parentCollectionID,
@@ -67,16 +67,16 @@ def list_collections(conn):
         ORDER BY c.parentCollectionID NULLS FIRST, c.collectionName
     """)
 
-    print("ID\t| 分类名称\t\t\t| 父分类\t| 文献数")
+    print("ID\t| Collection Name\t\t\t| Parent\t| Item Count")
     print("-" * 70)
     for row in cursor.fetchall():
-        parent = str(row[2]) if row[2] else "根目录"
+        parent = str(row[2]) if row[2] else "Root directory"
         name = row[1][:24] if row[1] else ""
         print(f"{row[0]}\t| {name:24}\t| {parent:8}\t| {row[3]}")
 
 
 def list_papers_in_collection(conn, collection_id, recursive=False):
-    """列出分类下的论文（支持递归子分类）"""
+    """List papers under a collection, optionally including child collections recursively"""
     cursor = conn.cursor()
 
     if recursive:
@@ -99,7 +99,7 @@ def list_papers_in_collection(conn, collection_id, recursive=False):
             ORDER BY date DESC
         """
         cursor.execute(query, collection_ids)
-        print(f"(递归查询，包含 {len(collection_ids)} 个分类)")
+        print(f"(Recursive query including {len(collection_ids)} collections)")
     else:
         cursor.execute("""
             SELECT i.itemID, idv.value as title,
@@ -118,7 +118,7 @@ def list_papers_in_collection(conn, collection_id, recursive=False):
             ORDER BY date DESC
         """, (collection_id,))
 
-    print("ItemID\t| 日期\t\t| 标题")
+    print("ItemID\t| Date\t\t| Title")
     print("-" * 80)
     for row in cursor.fetchall():
         title = row[1][:50] if row[1] else ""
@@ -127,7 +127,7 @@ def list_papers_in_collection(conn, collection_id, recursive=False):
 
 
 def search_paper(conn, keyword):
-    """搜索论文标题"""
+    """Search paper titles"""
     cursor = conn.cursor()
     cursor.execute("""
         SELECT i.itemID, idv.value as title,
@@ -146,8 +146,8 @@ def search_paper(conn, keyword):
         LIMIT 20
     """, (f"%{keyword}%",))
 
-    print(f"搜索: '{keyword}'")
-    print("ItemID\t| 日期\t\t| 标题")
+    print(f"Search: '{keyword}'")
+    print("ItemID\t| Date\t\t| Title")
     print("-" * 80)
     for row in cursor.fetchall():
         title = row[1][:50] if row[1] else ""
@@ -156,7 +156,7 @@ def search_paper(conn, keyword):
 
 
 def get_pdf_path(conn, item_id):
-    """获取论文 PDF 路径"""
+    """Get paper PDF path"""
     cursor = conn.cursor()
     cursor.execute("""
         SELECT ia.path, items.key,
@@ -175,20 +175,20 @@ def get_pdf_path(conn, item_id):
         if path and path.startswith('storage:'):
             filename = path.replace('storage:', '')
             full_path = STORAGE_DIR / key / filename
-            print(f"标题: {title}")
-            print(f"PDF路径: {full_path}")
+            print(f"Title: {title}")
+            print(f"PDF path: {full_path}")
             if full_path.exists():
-                print(f"文件存在: Yes")
+                print(f"File exists: Yes")
                 return str(full_path)
             else:
-                print(f"文件存在: No")
+                print(f"File exists: No")
     else:
-        print(f"未找到 itemID={item_id} 的 PDF 附件")
+        print(f"No PDF attachment found for itemID={item_id}")
     return None
 
 
 def get_collection_path(conn, collection_id):
-    """获取分类的完整路径"""
+    """Get the full collection path"""
     cursor = conn.cursor()
     cursor.execute("SELECT collectionID, collectionName, parentCollectionID FROM collections")
     collections = {row[0]: {'name': row[1], 'parent': row[2]} for row in cursor.fetchall()}
@@ -205,7 +205,7 @@ def get_collection_path(conn, collection_id):
 
 
 def get_item_collections(conn, item_id):
-    """获取论文所在的所有分类"""
+    """Get all collections containing the paper"""
     cursor = conn.cursor()
     cursor.execute("""
         SELECT c.collectionID, c.collectionName
@@ -217,30 +217,30 @@ def get_item_collections(conn, item_id):
 
 
 def add_to_collection_db(item_id, collection_id):
-    """将论文添加到分类（需要直接操作原数据库）"""
-    # 注意：这会直接修改 Zotero 数据库，需谨慎
+    """Add a paper to a collection, directly modifying the original database"""
+    # Warning: this directly modifies the Zotero database
     conn = sqlite3.connect(ZOTERO_DB)
     cursor = conn.cursor()
     try:
-        # 检查是否已存在
+        # Check whether the item already exists
         cursor.execute("""
             SELECT 1 FROM collectionItems
             WHERE collectionID = ? AND itemID = ?
         """, (collection_id, item_id))
         if cursor.fetchone():
-            print(f"论文 {item_id} 已在分类 {collection_id} 中")
+            print(f"Paper {item_id} is already in collection {collection_id}")
             return False
 
-        # 添加到分类
+        # Add to collection
         cursor.execute("""
             INSERT INTO collectionItems (collectionID, itemID, orderIndex)
             VALUES (?, ?, 0)
         """, (collection_id, item_id))
         conn.commit()
-        print(f"已将论文 {item_id} 添加到分类 {collection_id}")
+        print(f"Added paper {item_id} to collection {collection_id}")
         return True
     except Exception as e:
-        print(f"添加失败: {e}")
+        print(f"Add failed: {e}")
         conn.rollback()
         return False
     finally:
@@ -248,7 +248,7 @@ def add_to_collection_db(item_id, collection_id):
 
 
 def remove_from_collection_db(item_id, collection_id):
-    """从分类中移除论文"""
+    """Remove a paper from a collection"""
     conn = sqlite3.connect(ZOTERO_DB)
     cursor = conn.cursor()
     try:
@@ -258,13 +258,13 @@ def remove_from_collection_db(item_id, collection_id):
         """, (collection_id, item_id))
         if cursor.rowcount > 0:
             conn.commit()
-            print(f"已从分类 {collection_id} 移除论文 {item_id}")
+            print(f"Removed paper {item_id} from collection {collection_id}")
             return True
         else:
-            print(f"论文 {item_id} 不在分类 {collection_id} 中")
+            print(f"Paper {item_id} is not in collection {collection_id}")
             return False
     except Exception as e:
-        print(f"移除失败: {e}")
+        print(f"Remove failed: {e}")
         conn.rollback()
         return False
     finally:
@@ -272,17 +272,17 @@ def remove_from_collection_db(item_id, collection_id):
 
 
 def move_to_collection(item_id, new_collection_id, old_collection_id=None):
-    """移动论文到新分类（先添加到新分类，再从旧分类移除）"""
-    # 先添加到新分类
+    """Move a paper to a new collection by adding it to the new one and removing it from the old one"""
+    # Add to the new collection first
     add_to_collection_db(item_id, new_collection_id)
 
-    # 如果指定了旧分类，从旧分类移除
+    # If an old collection is specified, remove it from that collection
     if old_collection_id:
         remove_from_collection_db(item_id, old_collection_id)
 
 
 def find_collection_by_name(conn, name):
-    """根据名称查找分类"""
+    """Find collections by name"""
     cursor = conn.cursor()
     cursor.execute("""
         SELECT collectionID, collectionName, parentCollectionID
@@ -292,15 +292,15 @@ def find_collection_by_name(conn, name):
     results = cursor.fetchall()
     for r in results:
         path = get_collection_path(conn, r[0])
-        print(f"ID: {r[0]}, 路径: {path}")
+        print(f"ID: {r[0]}, Path: {path}")
     return results
 
 
 def get_paper_info(conn, item_id):
-    """获取论文详细信息"""
+    """Get detailed paper information"""
     cursor = conn.cursor()
 
-    # 获取标题
+    # Get title
     cursor.execute("""
         SELECT idv.value
         FROM itemData id
@@ -311,7 +311,7 @@ def get_paper_info(conn, item_id):
     title_row = cursor.fetchone()
     title = title_row[0] if title_row else "Unknown"
 
-    # 获取其他字段
+    # Get other fields
     cursor.execute("""
         SELECT f.fieldName, idv.value
         FROM itemData id
@@ -321,15 +321,15 @@ def get_paper_info(conn, item_id):
     """, (item_id,))
     fields = {row[0]: row[1] for row in cursor.fetchall()}
 
-    # 获取所在分类
+    # Get containing collections
     collections = get_item_collections(conn, item_id)
     collection_paths = [get_collection_path(conn, c[0]) for c in collections]
 
     print(f"ItemID: {item_id}")
-    print(f"标题: {title}")
-    print(f"日期: {fields.get('date', 'N/A')}")
+    print(f"Title: {title}")
+    print(f"Date: {fields.get('date', 'N/A')}")
     print(f"URL: {fields.get('url', 'N/A')}")
-    print(f"所在分类: {', '.join(collection_paths) if collection_paths else '无'}")
+    print(f"Collections: {', '.join(collection_paths) if collection_paths else 'No'}")
 
     return {
         'item_id': item_id,
@@ -341,53 +341,53 @@ def get_paper_info(conn, item_id):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Zotero 数据库查询工具')
-    subparsers = parser.add_subparsers(dest='command', help='子命令')
+    parser = argparse.ArgumentParser(description='Zotero database query tool')
+    subparsers = parser.add_subparsers(dest='command', help='subcommand')
 
-    # 列出分类
-    subparsers.add_parser('collections', help='列出所有分类')
+    # List collections
+    subparsers.add_parser('collections', help='List all collections')
 
-    # 列出分类下的论文
-    papers_parser = subparsers.add_parser('papers', help='列出分类下的论文')
-    papers_parser.add_argument('collection_id', type=int, help='分类ID')
-    papers_parser.add_argument('--recursive', '-r', action='store_true', help='递归包含子分类')
+    # List papers under a collection
+    papers_parser = subparsers.add_parser('papers', help='List papers under a collection')
+    papers_parser.add_argument('collection_id', type=int, help='collection ID')
+    papers_parser.add_argument('--recursive', '-r', action='store_true', help='include child collections recursively')
 
-    # 搜索论文
-    search_parser = subparsers.add_parser('search', help='搜索论文')
-    search_parser.add_argument('keyword', help='搜索关键词')
+    # Search papers
+    search_parser = subparsers.add_parser('search', help='Search papers')
+    search_parser.add_argument('keyword', help='search keyword')
 
-    # 获取 PDF 路径
-    pdf_parser = subparsers.add_parser('pdf', help='获取 PDF 路径')
-    pdf_parser.add_argument('item_id', type=int, help='论文 ItemID')
+    # Get PDF path
+    pdf_parser = subparsers.add_parser('pdf', help='Get PDF path')
+    pdf_parser.add_argument('item_id', type=int, help='paper ItemID')
 
-    # 获取论文信息
-    info_parser = subparsers.add_parser('info', help='获取论文详细信息')
-    info_parser.add_argument('item_id', type=int, help='论文 ItemID')
+    # Get paper info
+    info_parser = subparsers.add_parser('info', help='Get detailed paper information')
+    info_parser.add_argument('item_id', type=int, help='paper ItemID')
 
-    # 查找分类
-    find_parser = subparsers.add_parser('find-collection', help='根据名称查找分类')
-    find_parser.add_argument('name', help='分类名称（支持模糊匹配）')
+    # Find collection
+    find_parser = subparsers.add_parser('find-collection', help='Find collections by name')
+    find_parser.add_argument('name', help='collection name, fuzzy matching supported')
 
-    # 添加到分类
-    add_parser = subparsers.add_parser('add-to-collection', help='将论文添加到分类')
-    add_parser.add_argument('item_id', type=int, help='论文 ItemID')
-    add_parser.add_argument('collection_id', type=int, help='目标分类ID')
+    # Add to collection
+    add_parser = subparsers.add_parser('add-to-collection', help='Add paper to collection')
+    add_parser.add_argument('item_id', type=int, help='paper ItemID')
+    add_parser.add_argument('collection_id', type=int, help='target collection ID')
 
-    # 从分类移除
-    remove_parser = subparsers.add_parser('remove-from-collection', help='从分类移除论文')
-    remove_parser.add_argument('item_id', type=int, help='论文 ItemID')
-    remove_parser.add_argument('collection_id', type=int, help='分类ID')
+    # Remove from collection
+    remove_parser = subparsers.add_parser('remove-from-collection', help='Remove paper from collection')
+    remove_parser.add_argument('item_id', type=int, help='paper ItemID')
+    remove_parser.add_argument('collection_id', type=int, help='collection ID')
 
-    # 移动到新分类
-    move_parser = subparsers.add_parser('move', help='移动论文到新分类')
-    move_parser.add_argument('item_id', type=int, help='论文 ItemID')
-    move_parser.add_argument('new_collection_id', type=int, help='新分类ID')
-    move_parser.add_argument('--from', dest='old_collection_id', type=int, help='旧分类ID（可选）')
+    # Move to new collection
+    move_parser = subparsers.add_parser('move', help='Move paper to new collection')
+    move_parser.add_argument('item_id', type=int, help='paper ItemID')
+    move_parser.add_argument('new_collection_id', type=int, help='new collection ID')
+    move_parser.add_argument('--from', dest='old_collection_id', type=int, help='old collection ID, optional')
 
     args = parser.parse_args()
 
     if not ZOTERO_DB.exists():
-        print(f"Zotero 数据库不存在: {ZOTERO_DB}")
+        print(f"Zotero database does not exist: {ZOTERO_DB}")
         return
 
     conn = copy_db()

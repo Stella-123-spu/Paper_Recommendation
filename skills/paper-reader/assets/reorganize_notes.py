@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-论文笔记自动分类工具
-根据论文 tags 和内容自动分类到对应目录，并同步更新 Zotero 分类
+Automatic paper-note categorization tool
+Automatically categorize paper notes by tags and content, and synchronize Zotero collections
 """
 
 import os
@@ -25,7 +25,7 @@ from user_config import (
     zotero_db_path,
 )
 
-# 配置
+# Config
 PAPER_NOTES_ROOT = paper_notes_dir()
 ZOTERO_DB = zotero_db_path()
 CONCEPTS_DIR_NAME = paths_config()["concepts_folder"]
@@ -43,7 +43,7 @@ ZOTERO_COLLECTION_MAP = {
 
 
 def parse_frontmatter(filepath: Path) -> Optional[Dict]:
-    """解析 Markdown 文件的 YAML frontmatter"""
+    """Parse YAML frontmatter from a Markdown file"""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -51,7 +51,7 @@ def parse_frontmatter(filepath: Path) -> Optional[Dict]:
         if not content.startswith('---'):
             return None
 
-        # 找到第二个 ---
+        # Find the second ---
         end_idx = content.find('---', 3)
         if end_idx == -1:
             return None
@@ -59,12 +59,12 @@ def parse_frontmatter(filepath: Path) -> Optional[Dict]:
         yaml_str = content[3:end_idx].strip()
         return parse_simple_frontmatter(yaml_str)
     except Exception as e:
-        print(f"  解析失败: {e}")
+        print(f"  Parse failed: {e}")
         return None
 
 
 def parse_simple_frontmatter(frontmatter: str) -> Dict[str, Any]:
-    """解析本项目使用的简单 YAML frontmatter（仅支持顶层键值和列表）。"""
+    """Parse the simple YAML frontmatter used by this project, supporting only top-level scalars and lists."""
     parsed: Dict[str, Any] = {}
     current_list_key: Optional[str] = None
 
@@ -151,37 +151,37 @@ def strip_inline_comment(raw_value: str) -> str:
 
 
 def determine_category(tags: List[str], title: str = "") -> str:
-    """根据 tags 判断论文应该属于哪个分类"""
+    """Determine which collection a paper belongs to from tags"""
     if not tags:
         return FALLBACK_CATEGORY
 
-    # 确保所有 tags 都是字符串
+    # Ensure all tags are strings
     tags_lower = [str(t).lower() for t in tags]
     title_lower = title.lower()
 
-    # 计算每个分类的匹配分数，同时考虑优先级
+    # Compute each category match score while considering priority
     scores = {}
-    priority_bonus = len(CATEGORY_RULES)  # 优先级奖励基数
+    priority_bonus = len(CATEGORY_RULES)  # priority bonus base
 
     for idx, (category, keywords) in enumerate(CATEGORY_RULES.items()):
         score = 0
         for keyword in keywords:
             keyword_lower = keyword.lower()
-            # 检查 tags
+            # Check tags
             for tag in tags_lower:
                 if keyword_lower in tag or tag in keyword_lower:
                     score += 2
-            # 检查标题
+            # Check title
             if keyword_lower in title_lower:
                 score += 1
 
-        # 添加优先级奖励（越靠前的分类，同分时越优先）
+        # Add priority bonus, so earlier categories win ties
         if score > 0:
             score = score * 100 + (priority_bonus - idx)
 
         scores[category] = score
 
-    # 返回得分最高的分类
+    # Return the highest-scoring category
     best_category = max(scores, key=scores.get)
     if scores[best_category] > 0:
         return best_category
@@ -189,10 +189,10 @@ def determine_category(tags: List[str], title: str = "") -> str:
 
 
 def get_all_notes() -> List[Path]:
-    """获取所有论文笔记"""
+    """Get all paper notes"""
     notes = []
     for root, dirs, files in os.walk(PAPER_NOTES_ROOT):
-        # 跳过概念目录
+        # Skip concept directory
         if CONCEPTS_DIR_NAME in Path(root).parts:
             continue
         for f in files:
@@ -209,16 +209,16 @@ def get_all_notes() -> List[Path]:
 
 
 def reorganize_notes(dry_run: bool = True):
-    """重新组织论文笔记"""
+    """Reorganize paper notes"""
     notes = get_all_notes()
-    print(f"找到 {len(notes)} 篇论文笔记\n")
+    print(f"Found {len(notes)} paper notes\n")
 
-    moves = []  # (原路径, 新路径, 分类, zotero_item_id, 当前 Zotero 分类)
+    moves = []  # (old path, new path, category, zotero_item_id, current Zotero category)
 
     for note in notes:
         fm = parse_frontmatter(note)
         if not fm:
-            print(f"跳过 (无frontmatter): {note.name}")
+            print(f"Skip (no frontmatter): {note.name}")
             continue
 
         tags = fm.get('tags', [])
@@ -226,67 +226,67 @@ def reorganize_notes(dry_run: bool = True):
         zotero_item_id = fm.get('zotero_item_id')
         current_collection = fm.get('zotero_collection', '')
 
-        # 优先使用 frontmatter 中已声明的 zotero_collection 路径
+        # Prefer the zotero_collection path declared in frontmatter
         declared_collection = str(current_collection).strip() if current_collection else ""
         if declared_collection and declared_collection != "_inbox":
             new_category = declared_collection
         else:
             new_category = determine_category(tags, title)
 
-        # 当前目录
+        # Current directory
         current_rel = note.relative_to(PAPER_NOTES_ROOT)
         current_dir = str(current_rel.parent)
 
-        # 如果已经在正确分类，跳过
+        # Skip if already in the correct category
         if current_dir.startswith(new_category):
-            print(f"✓ 已正确分类: {note.name} -> {new_category}")
+            print(f"✓ Already correctly categorized: {note.name} -> {new_category}")
             continue
 
-        # 新路径
+        # new path
         new_path = PAPER_NOTES_ROOT / new_category / note.name
 
         moves.append((note, new_path, new_category, zotero_item_id, current_collection))
-        print(f"→ 需移动: {note.name}")
-        print(f"  从: {current_dir}")
-        print(f"  到: {new_category}")
+        print(f"→ Needs move: {note.name}")
+        print(f"  From: {current_dir}")
+        print(f"  To: {new_category}")
         print(f"  tags: {tags[:5]}...")
         print()
 
-    print(f"\n总计需要移动 {len(moves)} 篇笔记")
+    print(f"\ntotal notes to move: {len(moves)} notes")
 
     if dry_run:
-        print("\n[DRY RUN] 未实际执行移动，添加 --execute 参数执行")
+        print("\n[DRY RUN] No moves executed; add --execute to apply changes")
         return moves
 
-    # 执行移动
+    # Execute moves
     for old_path, new_path, category, zotero_id, current_collection in moves:
-        # 创建目标目录
+        # Create target directory
         new_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # 移动文件
+        # Move file
         shutil.move(str(old_path), str(new_path))
-        print(f"✓ 已移动: {old_path.name} -> {category}/")
+        print(f"✓ Moved: {old_path.name} -> {category}/")
 
-        # 更新 Zotero 分类
+        # Update Zotero category
         zotero_collection_value = category
         if zotero_id:
             synced_collection = update_zotero_collection(zotero_id, category, current_collection)
             if synced_collection:
                 zotero_collection_value = synced_collection
 
-        # 更新 frontmatter 中的 zotero_collection
+        # Update zotero_collection in frontmatter
         update_frontmatter_collection(new_path, zotero_collection_value)
 
     return moves
 
 
 def update_frontmatter_collection(filepath: Path, new_collection: str):
-    """更新笔记的 zotero_collection 字段"""
+    """Update the note zotero_collection field"""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # 替换 zotero_collection
+        # Replace zotero_collection
         if 'zotero_collection:' in content:
             content = re.sub(
                 r'^zotero_collection:.*$',
@@ -302,11 +302,11 @@ def update_frontmatter_collection(filepath: Path, new_collection: str):
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
     except Exception as e:
-        print(f"  更新 frontmatter 失败: {e}")
+        print(f"  Failed to update frontmatter: {e}")
 
 
 def get_collection_path(collections: Dict[int, Dict[str, Optional[int]]], collection_id: int) -> str:
-    """获取分类完整路径，如 一级分类/二级分类/主题名"""
+    """Get full category path, such as top-level/subtopic/theme"""
     path_parts = []
     current = collection_id
     while current:
@@ -324,7 +324,7 @@ def resolve_collection_id(
     path_to_id: Dict[str, int],
     name_to_ids: Dict[str, List[int]],
 ) -> Optional[int]:
-    """按完整路径、ID 或唯一末级分类名解析 collection ID。"""
+    """Resolve collection ID by full path, ID, or unique leaf category name."""
     if not collection_ref:
         return None
 
@@ -348,14 +348,14 @@ def resolve_collection_id(
 
 
 def update_zotero_collection(item_id: int, new_category: str, current_collection: str = "") -> Optional[str]:
-    """更新 Zotero 中论文的分类"""
+    """Update paper category in Zotero"""
     collection_id = ZOTERO_COLLECTION_MAP.get(new_category)
     if not collection_id:
-        print(f"  Zotero 分类未配置: {new_category}")
+        print(f"  Zotero category is not configured: {new_category}")
         return None
 
     if not ZOTERO_DB.exists():
-        print(f"  Zotero 数据库不存在: {ZOTERO_DB}")
+        print(f"  Zotero database does not exist: {ZOTERO_DB}")
         return None
 
     conn = None
@@ -392,9 +392,9 @@ def update_zotero_collection(item_id: int, new_category: str, current_collection
                 """,
                 (collection_id, item_id),
             )
-            print(f"  已将 Zotero item {item_id} 添加到分类 {target_path}")
+            print(f"  Added Zotero item {item_id} to collection {target_path}")
         else:
-            print(f"  Zotero item {item_id} 已在分类 {target_path} 中")
+            print(f"  Zotero item {item_id} is already in collection {target_path}")
 
         if previous_collection_id and previous_collection_id != collection_id:
             cursor.execute(
@@ -405,14 +405,14 @@ def update_zotero_collection(item_id: int, new_category: str, current_collection
                 (previous_collection_id, item_id),
             )
             if cursor.rowcount > 0:
-                print(f"  已从原分类 {get_collection_path(collections, previous_collection_id)} 移除 Zotero item {item_id}")
+                print(f"  Removed Zotero item {item_id} from previous category {get_collection_path(collections, previous_collection_id)}")
 
         conn.commit()
         return target_path
     except Exception as e:
         if conn is not None:
             conn.rollback()
-        print(f"  更新 Zotero 失败: {e}")
+        print(f"  Failed to update Zotero: {e}")
         return None
     finally:
         if conn is not None:
@@ -420,7 +420,7 @@ def update_zotero_collection(item_id: int, new_category: str, current_collection
 
 
 def analyze_current_distribution():
-    """分析当前笔记分布"""
+    """Analyze current note distribution"""
     notes = get_all_notes()
 
     category_count = {}
@@ -435,9 +435,9 @@ def analyze_current_distribution():
 
         category_count[category] = category_count.get(category, 0) + 1
 
-    print("=== 按新分类统计 ===")
+    print("=== Counts by New Category ===")
     for cat, count in sorted(category_count.items(), key=lambda x: -x[1]):
-        print(f"  {cat}: {count} 篇")
+        print(f"  {cat}: {count} papers")
 
 
 if __name__ == "__main__":

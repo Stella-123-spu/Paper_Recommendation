@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-arXiv API XML → JSON 解析器
-stdin 接收 arXiv API 的 Atom XML 响应，stdout 输出 JSON 数组。
-零外部依赖，仅使用标准库。
+arXiv API XML to JSON parser
+stdin receives the Atom XML response from the arXiv API; stdout emits a JSON array.
+No external dependencies; standard library only.
 
-用法:
+Usage:
     curl -s "https://export.arxiv.org/api/query?..." | python3 parse_arxiv.py
 """
 

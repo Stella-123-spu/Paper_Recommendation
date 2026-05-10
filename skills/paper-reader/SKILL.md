@@ -1,28 +1,29 @@
 ---
 name: paper-reader
 description: |
-  Use when user asks to "read paper", "analyze paper", "summarize paper",
-  "读论文", "分析文献", "帮我看一下这篇paper", "论文笔记", or provides a PDF file
+  Use when the user asks to "read paper", "analyze paper", "summarize paper",
+  "generate paper note", "quick paper read", "critique this paper", or provides a PDF file
   that appears to be an academic paper. Default to the shared domain focus in config,
   but still handle explicitly user-specified papers outside that focus.
 
-  Also supports Zotero integration: "读一下这篇论文 ...", "快速看一下这篇论文 ...",
-  "批判性分析这篇论文 ...", "读一下 Zotero 里的 XXX", "批量读一下 Zotero 里某个分类下的论文"
+  Also supports Zotero integration: "read this Zotero paper", "quick read a Zotero paper",
+  "critically analyze this Zotero paper", "read the papers in this Zotero collection",
+  and "batch-read papers under a Zotero collection".
 
-  **重要触发词**: "读一下 XXX"、"读一下这篇"、"帮我读" → 必须调用此 skill
+  Important trigger phrases: "read paper ...", "read this paper", "help me read this paper".
 ---
 
-> **开始前**: 先跟用户打个招呼 🐕
+> **Before starting**: greet the user briefly.
 
-# 学术论文阅读助手 (Paper Reader)
+# Academic Paper Reader
 
-默认围绕共享配置中的当前研究域，支持 Zotero 集成和 Obsidian 笔记保存；如果用户明确指定单篇论文，就按论文本身处理，不要被旧领域示例绑死。
+Default to the current research domain in the shared config, with Zotero integration and Obsidian note saving. If the user explicitly specifies one paper, follow the paper itself and do not let old domain examples constrain the analysis.
 
-## Step 0: 读取共享配置
+## Step 0: Read Shared Config
 
-先读取唯一共享配置 `../_shared/user-config.json`。不要再查找或假设第二个 override 配置文件。
+First read the only shared config file: `../_shared/user-config.json`. Do not search for or assume a second override config file.
 
-显式生成并在后续统一使用这些变量：
+Explicitly create and use these variables throughout the rest of the workflow:
 
 - `VAULT_PATH`
 - `NOTES_PATH`
@@ -38,181 +39,187 @@ description: |
 - `GIT_COMMIT_ENABLED`
 - `GIT_PUSH_ENABLED`
 
-其中：
+Where:
 
 - `NOTES_PATH = {VAULT_PATH}/{paper_notes_folder}`
 - `CONCEPTS_PATH = {NOTES_PATH}/{concepts_folder}`
-- `DOMAIN_*` 来自配置的 `domain` 段
-- `PAPER_NOTES_TAXONOMY` 来自配置的 `paper_notes_taxonomy` 段
-- `GIT_PUSH_ENABLED` 只有在 `GIT_COMMIT_ENABLED=true` 时才可能为真
+- `DOMAIN_*` come from the `domain` section of config
+- `PAPER_NOTES_TAXONOMY` comes from the `paper_notes_taxonomy` section of config
+- `GIT_PUSH_ENABLED` can only be true when `GIT_COMMIT_ENABLED=true`
 
-后续统一使用上面的变量。
+Use the variables above for all subsequent steps.
 
-如果用户没有明确指定领域语境，默认以 `DOMAIN_SUMMARY`、`DOMAIN_FOCUS_THEMES`、`DOMAIN_RELATED_THEMES` 为背景；如果用户明确给出论文，就以论文内容为准。
+If the user does not specify a domain context, default to `DOMAIN_SUMMARY`, `DOMAIN_FOCUS_THEMES`, and `DOMAIN_RELATED_THEMES`. If the user gives a specific paper, follow the paper content.
 
-## 1. 接收论文
+## 1. Receive a Paper
 
-| 输入方式 | 示例 | 处理方法 |
-|----------|------|----------|
-| PDF 路径 | `/path/to/paper.pdf` | 直接 Read |
-| arXiv 链接 | `https://arxiv.org/abs/xxxx` | WebFetch |
-| Zotero 分类 | "某个 Zotero 分类下的论文" | 查询数据库 → 列出 → 用户选择 |
-| Zotero 搜索 | "Zotero 里的 π0.5" | 搜索标题 → 找到 PDF |
-| 无 PDF | Zotero 条目无附件 | 从网上获取（见下方） |
+| Input Type | Example | Handling |
+|---|---|---|
+| PDF path | `/path/to/paper.pdf` | Read directly |
+| arXiv link | `https://arxiv.org/abs/xxxx` | WebFetch |
+| Zotero collection | "papers in this Zotero collection" | query database -> list papers -> user selects |
+| Zotero search | "the Zotero paper titled π0.5" | search title -> find PDF |
+| no PDF | Zotero item has no attachment | fetch from the web, see below |
 
-### 无 PDF 时的获取流程
+### Fetch Flow When No PDF Exists
 
-1. `python3 assets/zotero_helper.py info {item_id}` 获取论文信息
-2. 按优先级获取：arXiv HTML > arXiv PDF > DOI > WebSearch 标题
-3. 判断 arXiv ID：从 URL / Zotero extra 字段 / 标题搜索
-4. 推荐直接 WebFetch `https://arxiv.org/html/{arxiv_id}`，无需下载
-5. 跳过条件：既无 PDF 也无在线来源 / 非论文内容
+1. Run `python3 assets/zotero_helper.py info {item_id}` to get paper metadata.
+2. Fetch in priority order: arXiv HTML > arXiv PDF > DOI > WebSearch title.
+3. Identify arXiv ID from URL, Zotero `extra`, or title search.
+4. Prefer WebFetch on `https://arxiv.org/html/{arxiv_id}` without downloading.
+5. Skip only when there is neither a PDF nor an online source, or when the content is not a paper.
 
-> Zotero 详细操作见 `references/zotero-guide.md`
+> Detailed Zotero operations are in `references/zotero-guide.md`.
 
-## 2. 阅读模式
+## 2. Reading Modes
 
-| 模式 | 触发词 | 输出 |
-|------|--------|------|
-| **快速摘要** | "快速看一下"、"quick" | 3-5 句核心贡献 |
-| **完整解析** | "详细分析"、默认 | 结构化笔记（用模板） |
-| **批判分析** | "批判性分析"、"critique" | 方法论优缺点评估 |
-| **知识提取** | "提取公式"、"技术细节" | 公式 + 算法伪代码 |
+| Mode | Trigger Phrases | Output |
+|---|---|---|
+| **Quick Summary** | "quick read", "quick" | 3-5 sentences on the core contribution |
+| **Full Analysis** | "detailed analysis", default | structured note using the template |
+| **Critical Analysis** | "critique", "critical analysis" | methodological strengths and weaknesses |
+| **Knowledge Extraction** | "extract formulas", "technical details" | formulas plus algorithm pseudocode |
 
-## 3. 笔记生成
+## 3. Note Generation
 
-**模板**: 严格遵循 `assets/paper-note-template.md`，不可自行简化。
+**Template**: strictly follow `assets/paper-note-template.md`; do not simplify it yourself.
 
-### 核心质量规则
+### Core Quality Rules
 
-1. **零遗漏**: 论文中所有 Figure、所有公式、所有 Table 必须全部出现在笔记中
-2. **内联概念链接**: 正文中首次出现的技术术语必须用 `[[概念]]` 链接，不仅仅是结尾
-3. **严禁 ASCII 流程图**: 用结构化 Markdown 列表 + `$数学符号$` 描述架构
-4. **公式完整性**: 每个公式必须有名称（`[[概念|名称]]`）、LaTeX 公式、含义、符号说明
-5. **图片外链优先**: arXiv HTML / 项目主页 / GitHub，找不到再本地下载
+1. **Zero omissions**: every figure, formula, and table in the paper must appear in the note.
+2. **Inline concept links**: the first occurrence of technical terms in the body must use `[[Concept]]` links, not only a list at the end.
+3. **No ASCII flowcharts**: describe architecture with structured Markdown lists plus `$math symbols$`.
+4. **Formula completeness**: every formula needs a name (`[[Concept|Name]]`), LaTeX formula, meaning, and symbol explanation.
+5. **Prefer external image links**: use arXiv HTML, project pages, or GitHub first; download locally only when unavailable.
 
-> 公式/图片/表格的详细质量规范见 `references/quality-standards.md`
+> Detailed quality rules for formulas, images, and tables are in `references/quality-standards.md`.
 
-### 图片获取流程（多源 fallback）
+### Figure Retrieval Flow (Multi-Source Fallback)
 
-**目标**: 确保笔记中包含论文的**所有 Figure**，先统计论文 Figure 总数再逐一获取。
+**Goal**: ensure the note includes **every figure** in the paper. Count the paper's total figures first, then retrieve them one by one.
 
-1. WebSearch `"{论文标题} arxiv"` 获取 arXiv ID
-2. **来源 A — arXiv HTML**（首选）：
-   - WebFetch `https://arxiv.org/html/{arxiv_id}` 提取所有 `<figure>` 的标题与 img src URL
-   - 统计论文 Figure 总数，确认提取数量是否完整
-3. **来源 B — 项目主页**（HTML 404 或图片不全时）：
-   - 从摘要/HTML 中查找项目主页 URL（常见模式：`project page`、`github.io`、`our website`）
-   - WebFetch 项目主页，提取展示图片（通常包含 teaser / demo 图）
-4. **来源 C — PDF 提取**（前两者都失败时）：
-   - `pdfimages -png` 从 PDF 中提取，筛选 >10KB 的有效图片
-5. 笔记中用 `![Figure X](url)` 外链嵌入
-6. 验证：外链可加载 / 本地文件 >10KB
-7. **URL 去重**：写入前检查 URL 中是否有重复的 arxiv_id 路径段（如 `2603.05312v1/2603.05312v1/`），有则删除重复段。详见 `references/image-troubleshooting.md`
+1. WebSearch `"{paper title} arxiv"` to find the arXiv ID.
+2. **Source A: arXiv HTML** (preferred):
+   - WebFetch `https://arxiv.org/html/{arxiv_id}` and extract every `<figure>` caption and image `src` URL.
+   - Count the paper's total figures and confirm extraction is complete.
+3. **Source B: project page** when HTML is 404 or incomplete:
+   - Find the project-page URL in the abstract/HTML, using common patterns such as `project page`, `github.io`, or `our website`.
+   - WebFetch the project page and extract displayed images, usually teaser or demo figures.
+4. **Source C: PDF extraction** when both earlier sources fail:
+   - run `pdfimages -png` on the PDF and keep valid images larger than 10 KB.
+5. Embed images in notes as `![Figure X](url)`.
+6. Verify that external links load or local files are larger than 10 KB.
+7. **URL deduplication**: before writing, check whether the URL repeats an arXiv ID path segment, such as `2603.05312v1/2603.05312v1/`, and remove the duplicate segment. See `references/image-troubleshooting.md`.
 
-> ar5iv 编号不一定对应 Figure 编号，排错见 `references/image-troubleshooting.md`
+> ar5iv numbering does not always match figure numbering. See `references/image-troubleshooting.md` for debugging.
 
-### 图片可靠性保障（生成后自动执行）
+### Image Reliability After Generation
 
-笔记保存后，运行图片可达性检查脚本，自动将不可访问的外链图片下载到本地：
+After saving the note, run the image reachability script. It downloads unreachable external images into local storage automatically:
+
 ```bash
-python3 ../daily-papers/download_note_images.py "{笔记完整路径}"
+python3 ../daily-papers/download_note_images.py "{full note path}"
 ```
-- 可达的外链保持不动，不可达的自动下载到 `assets/` 并替换为 Obsidian wikilink
-- 如有本地化操作，frontmatter `image_source` 自动更新为 `mixed`
 
-### 公式格式
+- Reachable external links stay unchanged. Unreachable images are downloaded to `assets/` and replaced with Obsidian wikilinks.
+- If localization occurs, frontmatter `image_source` is updated to `mixed`.
 
-每个公式必须包含：名称（`[[概念|名称]]`）、LaTeX `$$` 块（前后留空行）、含义、符号列表。
-`$$` 块前后**必须有空行**否则 Obsidian 不渲染。超长公式用 `aligned` 拆分。
+### Formula Format
 
-## 4. Obsidian 保存
+Every formula must include: name (`[[Concept|Name]]`), a LaTeX `$$` block with blank lines before and after it, meaning, and symbol list.
+`$$` blocks **must have blank lines around them** or Obsidian will not render them. Split long formulas with `aligned`.
 
-### 文件命名
+## 4. Obsidian Saving
 
-只用**方法名/模型名**：`{方法名}.md`（如 `Pi05.md`，不加年份前缀）。
-方法名判断：标题冒号前 / Abstract 中 "We propose XXX" / 希腊字母转 ASCII。
-不确定时保存到 `_inbox/`。
+### File Naming
 
-### 保存路径
+Use only the **method/model name**: `{MethodName}.md`, for example `Pi05.md`, with no year prefix.
+Derive the method name from the title before the colon, from "We propose XXX" in the abstract, or by converting Greek letters to ASCII.
+If uncertain, save to `_inbox/`.
 
-按 Zotero 分类层级：`{NOTES_PATH}/{zotero_collection_path}/{方法名}.md`
+### Save Path
 
-### YAML frontmatter
+Use the Zotero collection hierarchy: `{NOTES_PATH}/{zotero_collection_path}/{MethodName}.md`.
+
+### YAML Frontmatter
 
 ```yaml
 ---
-title: "论文标题"
+title: "Paper Title"
 method_name: "MethodName"
 authors: [Author1, Author2]
 year: 2025
 venue: arXiv
-tags: [tag1, tag2]  # 小写连字符，3-8 个
-zotero_collection: 一级分类/二级分类/主题名
+tags: [tag1, tag2]  # lowercase hyphenated tags, 3-8 tags
+zotero_collection: top-level/subtopic/topic
 image_source: online
 created: YYYY-MM-DD
 ---
 ```
 
-Tags 判断：看 Related Work 小标题、Abstract、论文主问题与共享配置中的当前领域。第一个 tag 是最核心主题，不要机械照搬旧领域标签。
+Choose tags from Related Work headings, the abstract, the paper's central problem, and the current domain in shared config. The first tag is the core theme; do not mechanically copy stale domain tags.
 
-### 保存后自动执行
+### After Saving
 
-1. 只有在 `AUTO_REFRESH_INDEXES=true` 时才刷新目录页：
+1. Refresh index pages only when `AUTO_REFRESH_INDEXES=true`:
+
    ```bash
    python3 ../_shared/generate_concept_mocs.py
    python3 ../_shared/generate_paper_mocs.py
    ```
-2. 只有在 `GIT_COMMIT_ENABLED=true` 时才做 git：
-   - 先确认 `VAULT_PATH/.git` 存在
-   - `git add {新增文件} {paper_notes_folder}/` 后必须真的有 staged changes
-   - 满足条件后再执行：
+
+2. Run git only when `GIT_COMMIT_ENABLED=true`:
+   - first confirm `VAULT_PATH/.git` exists
+   - after `git add {new file} {paper_notes_folder}/`, staged changes must actually exist
+   - only then run:
+
    ```bash
-   cd {VAULT_PATH} && git add {新增文件} {paper_notes_folder}/ && git commit -m "add paper note: {方法名}"
+   cd {VAULT_PATH} && git add {new file} {paper_notes_folder}/ && git commit -m "add paper note: {MethodName}"
    ```
-   - 只有在 `GIT_PUSH_ENABLED=true` 且仓库已配置远端时才 push
 
-## 5. 概念库维护（每篇论文必做）
+   - push only when `GIT_PUSH_ENABLED=true` and a remote is configured
 
-概念库位置：`{CONCEPTS_PATH}`
+## 5. Concept Library Maintenance (Required for Every Paper)
 
-### 流程
+Concept library location: `{CONCEPTS_PATH}`.
 
-1. **扫描**论文笔记中所有 `[[概念]]` 链接
-2. **检查**每个链接对应的概念笔记是否存在（`ls` + `find`）
-3. **创建**不存在的概念（不可跳过），自动归类到对应子目录
+### Flow
 
-> 分类规则和模板见 `references/concept-categories.md`
+1. **Scan** every `[[Concept]]` link in the paper note.
+2. **Check** whether a corresponding concept note exists for each link with `ls` and `find`.
+3. **Create** missing concepts without skipping any, automatically categorizing them into the appropriate subdirectory.
 
-### 自检
+> Categorization rules and template are in `references/concept-categories.md`.
 
-- [ ] 笔记中所有 `[[概念]]` 链接的概念笔记都存在？
-- [ ] 概念笔记包含本论文作为"代表工作"？
+### Self-Check
 
-## 6. 完成后自检（合并 checklist）
+- [ ] Does every `[[Concept]]` link in the note have a concept note?
+- [ ] Does each concept note include this paper as a representative work?
 
-- [ ] 所有 Figure 都在笔记中（数量与论文一致）？
-- [ ] 所有公式都在笔记中（变量一致、无冲突）？
-- [ ] 所有 Table 完整保留（所有行列）？
-- [ ] 正文中技术术语有 `[[概念]]` 内联链接？
-- [ ] 概念库已更新（缺失的概念已创建）？
-- [ ] 图片可用（外链可加载 / 本地 >10KB）？
+## 6. Final Self-Check
 
-## 7. 交互式功能
+- [ ] Are all figures included in the note, matching the paper's count?
+- [ ] Are all formulas included, with consistent variables and no conflicts?
+- [ ] Are all tables fully preserved with all rows and columns?
+- [ ] Are technical terms linked inline with `[[Concept]]` links?
+- [ ] Has the concept library been updated with missing concepts?
+- [ ] Are images usable, either as reachable external links or local files larger than 10 KB?
 
-完成解析后询问：深入解释？对比其他论文？保存到 Obsidian？
-保存后自动创建缺失概念笔记，报告新增概念数量。
+## 7. Interactive Follow-Ups
 
-## 8. 批量处理
+After analysis, ask whether the user wants a deeper explanation, comparison with other papers, or saving to Obsidian.
+After saving, automatically create missing concept notes and report how many concepts were added.
 
-支持 Zotero 分类批量处理（默认递归子分类）。流程：递归获取论文 → 去重 → 跳过已有笔记 → 依次处理 → 汇总。
+## 8. Batch processing
 
-当这个 skill 被 `daily-papers-notes` 调用时，它是**单篇论文执行器**：并行拆分、subagent 编排、重试与汇总由上层 skill 负责，不要在这里再接管批量调度。
+Supports batch processing for Zotero collections, recursively including child collections by default. Flow: recursively fetch papers -> deduplicate -> skip existing notes -> process one by one -> summarize.
 
-## 参考文件（按需查阅）
+When this skill is invoked by `daily-papers-notes`, it acts as a **single-paper executor**. Parallel splitting, subagent orchestration, retries, and aggregation are owned by the parent skill; do not take over batch scheduling here.
 
-- **`references/zotero-guide.md`** — Zotero 查询、分类、PDF 路径获取、智能分类判断
-- **`references/image-troubleshooting.md`** — ar5iv 图片编号对应、PDF 提取备选
-- **`references/concept-categories.md`** — 概念自动归类规则 + 模板；具体目录以共享配置为准
-- **`references/cv-dl-terminology.md`** — 共享术语入口；真正的术语内容在 `../_shared/user-config.json` 的 `domain.terminology`
-- **`references/quality-standards.md`** — 公式/图片/表格的详细质量规范 + 自检清单
+## Reference Files (Read as Needed)
+
+- **`references/zotero-guide.md`**: Zotero querying, classification, PDF path retrieval, and intelligent categorization
+- **`references/image-troubleshooting.md`**: ar5iv figure-number mapping and PDF extraction fallback
+- **`references/concept-categories.md`**: concept auto-categorization rules and template; actual directories come from shared config
+- **`references/cv-dl-terminology.md`**: shared terminology entry point; actual terminology lives in `domain.terminology` inside `../_shared/user-config.json`
+- **`references/quality-standards.md`**: detailed quality rules for formulas, images, and tables, plus self-checks
