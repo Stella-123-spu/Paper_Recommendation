@@ -1,24 +1,26 @@
 ---
 name: daily-papers-fetch
 description: |
-  论文抓取（3 步流水线的第 1 步）。抓取 arXiv + HuggingFace + PubMed + bioRxiv + medRxiv 最新论文，打分筛选，富化信息，
-  输出到 /tmp/daily_papers_enriched.json 供后续 skill 使用。
+  Paper fetching, step 1 of the three-step pipeline. Fetches recent papers from arXiv,
+  Hugging Face, PubMed, bioRxiv, and medRxiv, scores and filters them, enriches metadata,
+  and writes `/tmp/daily_papers_enriched.json` for downstream skills.
 
-  触发词："论文抓取"、"跑一下论文抓取"
-  支持多天模式："过去3天论文推荐"、"过去一周论文推荐"、"过去一周的论文"、"抓 3 天的论文"、"最近5天"
+  Trigger phrases: "fetch papers", "run paper fetching".
+  Supports multi-day requests such as "paper recommendations from the last 3 days",
+  "paper recommendations from the last week", "fetch papers from the last 3 days", and "recent papers from the last 5 days".
 ---
 
-> **开始前**: 先说一声 "开始抓取论文 🐕" 并告知今天日期。如果是多天模式，告知抓取范围。
+> **Before starting**: say "Starting paper fetch" and state today's date. For multi-day mode, also state the fetch range.
 
-# 论文抓取 (Fetch + Score + Enrich)
+# Paper Fetching (Fetch + Score + Enrich)
 
-你是 用户的论文抓取系统（3 步流水线的第 1 步）。抓取最新论文 → 打分筛选 → 富化信息 → 保存到临时文件。
+You are the user's paper fetching system, step 1 of the three-step pipeline. Fetch recent papers -> score and filter -> enrich metadata -> save to a temporary file.
 
-## Step 0: 读取共享配置
+## Step 0: Read Shared Config
 
-先读取唯一共享配置 `../_shared/user-config.json`。不要再查找或假设第二个 override 配置文件。
+First read the only shared config file: `../_shared/user-config.json`. Do not search for or assume a second override config file.
 
-显式生成并在后续统一使用这些变量：
+Explicitly create and use these variables throughout the rest of the workflow:
 
 - `VAULT_PATH`
 - `DAILY_PAPERS_PATH`
@@ -32,106 +34,111 @@ description: |
 - `MIN_SCORE`
 - `TOP_N`
 
-其中：
+Where:
 
 - `DAILY_PAPERS_PATH = {VAULT_PATH}/{daily_papers_folder}`
-- `DOMAIN_NAME / DOMAIN_SUMMARY / DOMAIN_FOCUS_THEMES` 来自共享配置的 `domain` 段
-- 所有关键词、分类、阈值都以共享配置为准
-- 不要额外叠加过时的默认领域偏好；主题以共享配置中的当前研究方向为准
+- `DOMAIN_NAME / DOMAIN_SUMMARY / DOMAIN_FOCUS_THEMES` come from the `domain` section of the shared config
+- all keywords, categories, and thresholds come from the shared config
+- do not add stale default domain preferences; the active research direction is the one in the shared config
 
-后续统一以共享配置和上面的变量为准。
+Use the shared config and the variables above for all subsequent steps.
 
-## 解析天数
+## Parse Number of Days
 
-从用户输入中解析 `--days N` 参数。匹配规则：
-- "过去一周"、"最近7天"、"一周的论文" → `--days 7`
-- "过去3天"、"最近三天"、"抓3天" → `--days 3`
-- "过去两周" → `--days 14`
-- 无特殊指定 / "跑一下论文抓取" → 不加 `--days`（默认当天）
+Parse a `--days N` argument from the user request. Matching rules:
 
-将解析出的天数存为变量 `DAYS_ARG`，在后续脚本调用中使用。
+- "last week", "recent 7 days", "papers from the last week" -> `--days 7`
+- "last 3 days", "recent three days", "fetch 3 days" -> `--days 3`
+- "last two weeks" -> `--days 14`
+- no special range / "fetch papers" -> omit `--days` and use the script default of today
 
-## 配置来源
+Store the parsed value as `DAYS_ARG` and use it in later script calls.
 
-- 唯一配置文件：`../_shared/user-config.json`
-- 如果需要切换领域、关键词、主题或路径，只改这一个文件
-- 不要在 skill 文本、脚本参数或临时提示词里再维护第二套关键词表
+## Config Source
 
-## 工作流程
+- Single config file: `../_shared/user-config.json`
+- to switch domain, keywords, themes, or paths, edit only this file
+- Do not maintain another keyword table in skill text, script arguments, or temporary prompts
 
-### Phase 1+2: 抓取 + 打分 + 合并去重（纯 Python 脚本）
+## Workflow
 
-用 `fetch_and_score.py` 一步完成 HuggingFace + arXiv + PubMed + bioRxiv + medRxiv 抓取、打分、合并去重、历史去重、按配置选 Top N。**零 token 消耗。**
+### Phase 1+2: Fetch + Score + Merge/Deduplicate (Pure Python Script)
+
+Use `fetch_and_score.py` to perform Hugging Face + arXiv + PubMed + bioRxiv + medRxiv fetching, scoring, merging, deduplication, history deduplication, and top N selection from config in one step. This costs zero model tokens.
 
 ```bash
-# 默认：当天
+# Default: today
 python3 ../daily-papers/fetch_and_score.py > /tmp/daily_papers_top30.json
 
-# 多天模式（将 N 替换为解析出的天数）
+# Multi-day mode, replacing N with the parsed number of days
 python3 ../daily-papers/fetch_and_score.py --days N > /tmp/daily_papers_top30.json
 ```
 
-根据前面解析的 `DAYS_ARG`，如果用户指定了天数就加 `--days N`，否则不加。
+Based on `DAYS_ARG`, add `--days N` only when the user specified a range.
 
-脚本自动完成：
-- 并行抓取 HuggingFace Daily + Trending API、arXiv API、PubMed、bioRxiv、medRxiv
-- 关键词打分（正向/负向/领域加分/trending 加分）
-- 按 `paper_id` / DOI / arXiv ID / 标题哈希跨源合并去重
-- 读取 `.history.json` 跨天去重（含周末模式放宽规则）
-- 不足 20 篇时从历史回填
-- 按共享配置中的 `top_n` 降序选取结果
+The script automatically handles:
 
-进度日志输出到 stderr，JSON 结果输出到 stdout。
+- parallel fetching from Hugging Face Daily + Trending API, arXiv API, PubMed, bioRxiv, and medRxiv
+- keyword scoring with positive, negative, domain-boost, and trending signals
+- cross-source deduplication by `paper_id`, DOI, arXiv ID, and title hash
+- cross-day deduplication against `.history.json`, including relaxed weekend rules
+- history backfill when fewer than 20 papers are available
+- selecting results by descending score using `top_n` from shared config
 
-**检查输出**：确认 `/tmp/daily_papers_top30.json` 存在且包含有效 JSON 数组。如果为空数组或文件不存在，检查 stderr 诊断问题。
+Progress logs go to stderr. JSON results go to stdout.
 
-### Phase 3: 批量富化（enrich_papers.py 脚本）
+**Check output**: confirm `/tmp/daily_papers_top30.json` exists and contains a valid JSON array. If it is missing or an empty array, inspect stderr for diagnostics.
 
-用 `enrich_papers.py` 脚本一次性富化所有论文。脚本使用 `asyncio` + `curl` 子进程并发请求，纯 regex 解析 HTML，无需 WebFetch。
+### Phase 3: Batch Enrichment (`enrich_papers.py` Script)
 
-**先把 Phase 2 的 Top 30 结果保存到临时文件**，然后运行：
+Use `enrich_papers.py` to enrich all papers in one batch. The script uses `asyncio` plus concurrent `curl` subprocesses and regex-based HTML parsing, without WebFetch.
+
+**First save the Phase 2 top 30 results to the temporary file**, then run:
 
 ```bash
 cat /tmp/daily_papers_top30.json | python3 ../daily-papers/enrich_papers.py /tmp/daily_papers_enriched.json
 ```
 
-注意：使用**文件路径参数**（而非 stdout 重定向），避免 sandbox 环境下 stdout/stderr 混淆。
+Important: use a **file path argument** rather than stdout redirection, so stdout and stderr do not get mixed in sandboxed environments.
 
-脚本自动完成以下工作（Semaphore(10) 限制并发，单篇超时 30 秒）：
-- 并行抓取 HTML 页面 + PDF 页面
-- 从 HTML 提取：figure_url、authors、affiliations、section_headers、captions、has_real_world、method_names、method_summary
-- 从 PDF 提取：affiliations（通过 `pdftotext | extract_affiliations.py`）
-- 如果 HTML authors 为空，fallback 到 abs 页面 `<meta>` 标签提取 authors/affiliations
-- 合并优先级（脚本内部处理）：
-  - figure_url: HTML curl
-  - affiliations: PDF > HTML > abs fallback > Phase 1 data
-  - authors: HTML > abs fallback > Phase 1 data
-  - 其他字段: HTML regex 提取
+The script automatically performs the following work with `Semaphore(10)` concurrency and a 30-second timeout per paper:
 
-**输出格式**：与输入相同的 JSON 数组，每篇论文增加以下字段：
-- `figure_url` (string): 首图 URL
-- `affiliations` (string): 机构列表，逗号分隔
-- `authors` (string): 作者列表（可能被更完整的来源覆盖）
-- `section_headers` (array): 章节标题
-- `captions` (array): 图表标题
-- `has_real_world` (bool): 是否包含真实实验
-- `method_names` (array): 方法名列表
-- `method_summary` (string): 方法描述（300-500 字）
+- fetches HTML pages and PDF pages in parallel
+- extracts from HTML: `figure_url`, `authors`, `affiliations`, `section_headers`, `captions`, `has_real_world`, `method_names`, `method_summary`
+- extracts from PDF: `affiliations` via `pdftotext | extract_affiliations.py`
+- falls back to `<meta>` tags on the abstract page for authors and affiliations when HTML authors are empty
+- merges fields with these internal priorities:
+  - `figure_url`: HTML curl
+  - `affiliations`: PDF > HTML > abstract fallback > Phase 1 data
+  - `authors`: HTML > abstract fallback > Phase 1 data
+  - other fields: HTML regex extraction
 
-## 输出
+**Output format**: same JSON array as input, with these fields added to each paper:
 
-完成后检查 `/tmp/daily_papers_enriched.json` 存在且包含有效 JSON 数组。告知用户：
-- 抓取了多少篇论文
-- 富化成功多少篇
-- 提示运行下一步：`跑一下论文点评`
+- `figure_url` (string): first figure URL
+- `affiliations` (string): comma-separated institution list
+- `authors` (string): author list, possibly overwritten by a more complete source
+- `section_headers` (array): section headings
+- `captions` (array): figure/table captions
+- `has_real_world` (bool): whether real-world experiments are detected
+- `method_names` (array): method names
+- `method_summary` (string): method description, 300-500 words
 
-## 注意事项
+## Output
 
-- Phase 1+2 使用 `fetch_and_score.py` 脚本，由当前 Codex 会话直接执行，零 token 消耗
-- Phase 3 使用 `enrich_papers.py` 脚本，同样由当前 Codex 会话直接执行
-- 如果脚本执行失败，检查 stderr 输出诊断问题
-- 如果 arXiv API 抓取失败，脚本自动 fallback 到仅 HuggingFace 源
-- 如果 medRxiv 在 Python SSL 路径下抓取失败，脚本会自动 fallback 到 `curl`
-- 如果总论文数不足 20 篇，有多少处理多少
-- **周末策略**：arXiv 周末不更新，HF daily 周末基本为空，但 HF trending 持续更新。周末主要依赖 trending 来源
-- **不做 git 操作**，不生成推荐文件，只输出临时 JSON
+After completion, verify `/tmp/daily_papers_enriched.json` exists and contains a valid JSON array. Tell the user:
+
+- how many papers were fetched
+- how many papers were enriched successfully
+- to run the next step: `review papers`
+
+## Notes
+
+- Phase 1+2 uses `fetch_and_score.py` and is run directly by the current Codex session, with zero model-token cost
+- Phase 3 uses `enrich_papers.py` and is also run directly by the current Codex session
+- If a script fails, inspect stderr for diagnostics
+- If arXiv API fetching fails, the script automatically falls back to Hugging Face-only sources
+- If medRxiv fetching fails through Python SSL, the script automatically falls back to `curl`
+- If fewer than 20 papers are available, process however many exist
+- **Weekend strategy**: arXiv does not update on weekends, Hugging Face Daily is usually sparse, but Hugging Face Trending keeps updating. On weekends, rely mainly on trending sources
+- **Do not perform git operations**, do not generate the recommendation file, and only output temporary JSON

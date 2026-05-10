@@ -57,227 +57,269 @@
     ],
     "terminology": [
       {
-        "category": "患者轨迹与时间建模",
+        "category": "Patient trajectory and temporal modeling",
         "terms": [
           {
             "term": "Patient trajectory modeling",
-            "aliases": ["patient journey modeling"],
-            "summary": "把患者的多次就诊、事件、检查、治疗与结局建模为连续演化过程。"
+            "aliases": [
+              "patient journey modeling"
+            ],
+            "summary": "Models repeated visits, events, tests, treatments, and outcomes as a continuously evolving patient process."
           },
           {
             "term": "Longitudinal EHR modeling",
-            "aliases": ["longitudinal patient modeling"],
-            "summary": "对纵向电子病历序列进行表示学习、预测或生成。"
+            "aliases": [
+              "longitudinal patient modeling"
+            ],
+            "summary": "Learns representations, predictions, or generations from longitudinal electronic health record sequences."
           },
           {
             "term": "Temporal reasoning",
-            "aliases": ["time-aware reasoning"],
-            "summary": "显式处理事件顺序、时间间隔、时间尺度和因果时序约束。"
+            "aliases": [
+              "time-aware reasoning"
+            ],
+            "summary": "Explicitly handles event order, time gaps, temporal scales, and causal temporal constraints."
           },
           {
             "term": "Temporal abstraction",
             "aliases": [],
-            "summary": "把细粒度临床事件压缩成更高层的时间模式或阶段表示。"
+            "summary": "Compresses fine-grained clinical events into higher-level temporal patterns or stage representations."
           },
           {
             "term": "Survival analysis",
-            "aliases": ["time-to-event modeling"],
-            "summary": "建模某事件发生时间及删失信息，常用于临床风险评估。"
+            "aliases": [
+              "time-to-event modeling"
+            ],
+            "summary": "Models time-to-event outcomes and censoring, commonly used for clinical risk assessment."
           }
         ]
       },
       {
-        "category": "EHR基础模型与患者表征",
+        "category": "EHR foundation models and patient representation",
         "terms": [
           {
             "term": "EHR foundation model",
-            "aliases": ["clinical foundation model"],
-            "summary": "在大规模电子病历上预训练，用于下游多任务迁移的通用模型。"
+            "aliases": [
+              "clinical foundation model"
+            ],
+            "summary": "A general-purpose model pretrained on large-scale electronic health records for transfer to downstream clinical tasks."
           },
           {
             "term": "Patient representation learning",
-            "aliases": ["patient embedding"],
-            "summary": "学习患者级别的紧凑表示，用于检索、预测、分层和决策。"
+            "aliases": [
+              "patient embedding"
+            ],
+            "summary": "Learns compact patient-level representations for retrieval, prediction, stratification, and decision support."
           },
           {
             "term": "Self-supervised pretraining",
-            "aliases": ["self-supervised learning"],
-            "summary": "在无标签或弱标签临床数据上预训练通用表示。"
+            "aliases": [
+              "self-supervised learning"
+            ],
+            "summary": "Pretrains general representations on unlabeled or weakly labeled clinical data."
           },
           {
             "term": "Masked modeling",
-            "aliases": ["masked token modeling", "masked event modeling"],
-            "summary": "通过恢复被遮蔽的事件、代码或文本，学习临床上下文表示。"
+            "aliases": [
+              "masked token modeling",
+              "masked event modeling"
+            ],
+            "summary": "Learns clinical context representations by reconstructing masked events, codes, or text."
           },
           {
             "term": "Clinical retrieval",
-            "aliases": ["cohort retrieval"],
-            "summary": "根据患者表示、病例描述或查询条件检索相似患者或病例子集。"
+            "aliases": [
+              "cohort retrieval"
+            ],
+            "summary": "Retrieves similar patients or case subsets from patient representations, case descriptions, or query criteria."
           }
         ]
       },
       {
-        "category": "临床预测与风险分层",
+        "category": "Clinical prediction and risk stratification",
         "terms": [
           {
             "term": "Risk prediction",
             "aliases": [],
-            "summary": "预测未来临床事件、并发症或不良结局发生概率。"
+            "summary": "Predicts the probability of future clinical events, complications, or adverse outcomes."
           },
           {
             "term": "Outcome prediction",
             "aliases": [],
-            "summary": "预测治疗或随访后的临床结局。"
+            "summary": "Predicts clinical outcomes after treatment or follow-up."
           },
           {
             "term": "Early warning",
-            "aliases": ["deterioration prediction"],
-            "summary": "对病情恶化、脓毒症、死亡等高风险事件进行提前预警。"
+            "aliases": [
+              "deterioration prediction"
+            ],
+            "summary": "Provides early warning for high-risk events such as deterioration, sepsis, or death."
           },
           {
             "term": "Readmission prediction",
             "aliases": [],
-            "summary": "预测患者出院后再入院风险。"
+            "summary": "Predicts a patient’s risk of readmission after discharge."
           },
           {
             "term": "Treatment response modeling",
             "aliases": [],
-            "summary": "预测不同治疗方案下的疗效、毒性或恢复轨迹。"
+            "summary": "Predicts efficacy, toxicity, or recovery trajectories under different treatment options."
           }
         ]
       },
       {
-        "category": "Clinical LLM与医学问答",
+        "category": "Clinical LLMs and medical QA",
         "terms": [
           {
             "term": "Clinical LLM",
-            "aliases": ["medical LLM"],
-            "summary": "面向临床文本理解、问答、摘要和辅助决策的大语言模型。"
+            "aliases": [
+              "medical LLM"
+            ],
+            "summary": "A large language model for clinical text understanding, question answering, summarization, and decision support."
           },
           {
             "term": "Retrieval-augmented generation",
-            "aliases": ["RAG"],
-            "summary": "在生成回答前先检索病例、指南或知识库，减少幻觉。"
+            "aliases": [
+              "RAG"
+            ],
+            "summary": "Retrieves cases, guidelines, or knowledge before generating answers to reduce hallucination."
           },
           {
             "term": "Instruction tuning",
             "aliases": [],
-            "summary": "通过任务指令数据微调模型，使其更适合临床问答与任务执行。"
+            "summary": "Fine-tunes a model on task-instruction data to better support clinical QA and task execution."
           },
           {
             "term": "Clinical summarization",
-            "aliases": ["discharge summary generation"],
-            "summary": "从病历、检查和时间线中生成结构化或自由文本摘要。"
+            "aliases": [
+              "discharge summary generation"
+            ],
+            "summary": "Generates structured or free-text summaries from records, tests, and timelines."
           },
           {
             "term": "Grounded medical QA",
             "aliases": [],
-            "summary": "回答必须由病历、文献或指南中的证据支持。"
+            "summary": "Requires answers to be supported by evidence from records, literature, or guidelines."
           }
         ]
       },
       {
-        "category": "多模态临床建模",
+        "category": "Multimodal clinical modeling",
         "terms": [
           {
             "term": "Multimodal clinical modeling",
-            "aliases": ["multimodal patient modeling"],
-            "summary": "联合建模EHR、临床文本、影像、波形、组学等多源数据。"
+            "aliases": [
+              "multimodal patient modeling"
+            ],
+            "summary": "Jointly models EHR, clinical text, imaging, waveforms, omics, and other data sources."
           },
           {
             "term": "Cross-modal fusion",
-            "aliases": ["multimodal fusion"],
-            "summary": "把不同模态的信息对齐并融合到统一患者表示中。"
+            "aliases": [
+              "multimodal fusion"
+            ],
+            "summary": "Aligns and fuses information from different modalities into a unified patient representation."
           },
           {
             "term": "Clinical imaging-language modeling",
             "aliases": [],
-            "summary": "联合建模影像及其报告、病历或标签。"
+            "summary": "Jointly models clinical images with reports, records, or labels."
           },
           {
             "term": "Waveform-EHR fusion",
             "aliases": [],
-            "summary": "融合监护波形与结构化病历信息以提升时序预测能力。"
+            "summary": "Fuses monitoring waveforms with structured EHR information to improve temporal prediction."
           }
         ]
       },
       {
-        "category": "因果、干预与医疗决策",
+        "category": "Causal, intervention, and clinical decision-making",
         "terms": [
           {
             "term": "Causal inference",
             "aliases": [],
-            "summary": "从观察性临床数据中估计干预与结局之间的因果关系。"
+            "summary": "Estimates causal relationships between interventions and outcomes from observational clinical data."
           },
           {
             "term": "Counterfactual inference",
             "aliases": [],
-            "summary": "估计患者在未接受当前治疗、而接受其他干预时可能出现的结局。"
+            "summary": "Estimates outcomes a patient might have had under alternative interventions."
           },
           {
             "term": "Treatment effect estimation",
-            "aliases": ["uplift modeling"],
-            "summary": "估计个体化治疗效应，用于精准干预选择。"
+            "aliases": [
+              "uplift modeling"
+            ],
+            "summary": "Estimates individualized treatment effects for precision intervention selection."
           },
           {
             "term": "Off-policy evaluation",
-            "aliases": ["OPE"],
-            "summary": "在不实际部署新策略的情况下评估其在历史数据上的预期效果。"
+            "aliases": [
+              "OPE"
+            ],
+            "summary": "Evaluates the expected effect of a new policy on historical data without deploying it."
           },
           {
             "term": "Clinical decision-making",
-            "aliases": ["medical decision support"],
-            "summary": "用模型辅助诊疗、分诊、处置和治疗规划。"
+            "aliases": [
+              "medical decision support"
+            ],
+            "summary": "Uses models to support diagnosis, triage, management, and treatment planning."
           }
         ]
       },
       {
-        "category": "医学世界模型与虚拟患者",
+        "category": "Medical world models and virtual patients",
         "terms": [
           {
             "term": "Medical world model",
             "aliases": [],
-            "summary": "学习患者状态随时间和干预变化的潜在动力学模型。"
+            "summary": "Learns latent dynamics of how patient state changes over time and interventions."
           },
           {
             "term": "Virtual patient",
-            "aliases": ["digital patient twin", "patient simulator"],
-            "summary": "可用于推演病程、评估干预和训练决策策略的患者模拟体。"
+            "aliases": [
+              "digital patient twin",
+              "patient simulator"
+            ],
+            "summary": "A patient simulator for disease-course rollout, intervention evaluation, and decision-policy training."
           },
           {
             "term": "Latent dynamics model",
             "aliases": [],
-            "summary": "在潜空间中建模病程转移与干预影响。"
+            "summary": "Models disease-state transitions and intervention effects in latent space."
           },
           {
             "term": "Counterfactual rollout",
             "aliases": [],
-            "summary": "在模拟环境中推演不同治疗决策下的未来轨迹。"
+            "summary": "Simulates future trajectories under different treatment decisions."
           }
         ]
       },
       {
-        "category": "常用数据集与基准",
+        "category": "Common datasets and benchmarks",
         "terms": [
           {
             "term": "MIMIC-IV",
-            "aliases": ["MIMIC"],
-            "summary": "重症监护领域常用的大规模电子病历数据集。"
+            "aliases": [
+              "MIMIC"
+            ],
+            "summary": "A widely used large-scale intensive-care electronic health record dataset."
           },
           {
             "term": "eICU",
             "aliases": [],
-            "summary": "多中心重症监护电子病历数据集。"
+            "summary": "A multi-center intensive-care electronic health record dataset."
           },
           {
             "term": "PhysioNet",
             "aliases": [],
-            "summary": "包含多种临床时间序列、波形和挑战任务的数据平台。"
+            "summary": "A data platform containing clinical time series, waveforms, and challenge tasks."
           },
           {
             "term": "UK Biobank",
             "aliases": [],
-            "summary": "大规模人群队列资源，常用于长期风险与多模态研究。"
+            "summary": "A large population cohort resource often used for long-term risk and multimodal research."
           }
         ]
       }
@@ -377,63 +419,187 @@
     "concept_fallback_category": "0-uncategorized",
     "categories": [
       {
-        "name": "1-患者轨迹建模",
-        "keywords": ["patient trajectory", "trajectory modeling", "care pathway", "care journey", "disease progression", "longitudinal", "event sequence", "trajectory analysis", "trajectory forecasting", "patient journey"],
+        "name": "1-patient-trajectory-modeling",
+        "keywords": [
+          "patient trajectory",
+          "trajectory modeling",
+          "care pathway",
+          "care journey",
+          "disease progression",
+          "longitudinal",
+          "event sequence",
+          "trajectory analysis",
+          "trajectory forecasting",
+          "patient journey"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "2-临床预测与风险分层",
-        "keywords": ["risk prediction", "outcome prediction", "readmission", "mortality", "length of stay", "early warning", "prognosis", "adverse event", "treatment response", "clinical forecasting"],
+        "name": "2-clinical-prediction-and-risk-stratification",
+        "keywords": [
+          "risk prediction",
+          "outcome prediction",
+          "readmission",
+          "mortality",
+          "length of stay",
+          "early warning",
+          "prognosis",
+          "adverse event",
+          "treatment response",
+          "clinical forecasting"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "3-EHR基础模型",
-        "keywords": ["ehr foundation model", "clinical foundation model", "patient foundation model", "electronic health record", "EHR", "pretraining", "pre-training", "self-supervised", "representation learning", "foundation model"],
+        "name": "3-ehr-foundation-models",
+        "keywords": [
+          "ehr foundation model",
+          "clinical foundation model",
+          "patient foundation model",
+          "electronic health record",
+          "EHR",
+          "pretraining",
+          "pre-training",
+          "self-supervised",
+          "representation learning",
+          "foundation model"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "4-Clinical LLM与医学问答",
-        "keywords": ["clinical LLM", "medical LLM", "medical question answering", "clinical question answering", "instruction tuning", "RAG", "retrieval augmented generation", "summarization", "note generation", "medical report generation"],
+        "name": "4-clinical-llms-and-medical-qa",
+        "keywords": [
+          "clinical LLM",
+          "medical LLM",
+          "medical question answering",
+          "clinical question answering",
+          "instruction tuning",
+          "RAG",
+          "retrieval augmented generation",
+          "summarization",
+          "note generation",
+          "medical report generation"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "5-多模态临床建模",
-        "keywords": ["multimodal clinical", "multimodal patient", "ehr + imaging", "ehr + note", "ehr + genomics", "cross-modal", "fusion", "clinical imaging", "radiology report", "pathology"],
+        "name": "5-multimodal-clinical-modeling",
+        "keywords": [
+          "multimodal clinical",
+          "multimodal patient",
+          "ehr + imaging",
+          "ehr + note",
+          "ehr + genomics",
+          "cross-modal",
+          "fusion",
+          "clinical imaging",
+          "radiology report",
+          "pathology"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "6-因果与干预建模",
-        "keywords": ["causal", "counterfactual", "intervention", "treatment effect", "uplift", "off-policy evaluation", "structural causal model", "do-calculus", "confounding", "counterfactual inference"],
+        "name": "6-causal-and-intervention-modeling",
+        "keywords": [
+          "causal",
+          "counterfactual",
+          "intervention",
+          "treatment effect",
+          "uplift",
+          "off-policy evaluation",
+          "structural causal model",
+          "do-calculus",
+          "confounding",
+          "counterfactual inference"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "7-医疗决策与Agent",
-        "keywords": ["medical agent", "clinical agent", "agentic", "tool use", "decision making", "treatment recommendation", "care planning", "offline RL", "reinforcement learning", "policy learning", "agentic healthcare"],
+        "name": "7-clinical-decision-making-and-agents",
+        "keywords": [
+          "medical agent",
+          "clinical agent",
+          "agentic",
+          "tool use",
+          "decision making",
+          "treatment recommendation",
+          "care planning",
+          "offline RL",
+          "reinforcement learning",
+          "policy learning",
+          "agentic healthcare"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "8-医学世界模型与虚拟患者",
-        "keywords": ["medical world model", "world model", "virtual patient", "patient simulator", "digital twin", "disease simulator", "counterfactual rollout", "latent dynamics", "state space model"],
+        "name": "8-medical-world-models-and-virtual-patients",
+        "keywords": [
+          "medical world model",
+          "world model",
+          "virtual patient",
+          "patient simulator",
+          "digital twin",
+          "disease simulator",
+          "counterfactual rollout",
+          "latent dynamics",
+          "state space model"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "9-患者表征、检索与相似性",
-        "keywords": ["patient representation", "patient embedding", "patient retrieval", "clinical retrieval", "patient similarity", "cohort retrieval", "representation learning", "metric learning"],
+        "name": "9-patient-representation-retrieval-and-similarity",
+        "keywords": [
+          "patient representation",
+          "patient embedding",
+          "patient retrieval",
+          "clinical retrieval",
+          "patient similarity",
+          "cohort retrieval",
+          "representation learning",
+          "metric learning"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "10-临床时序与时间推理",
-        "keywords": ["time series", "temporal reasoning", "irregular time series", "survival analysis", "event sequence", "longitudinal modeling", "time-aware", "temporal abstraction", "visit-level modeling"],
+        "name": "10-clinical-time-series-and-temporal-reasoning",
+        "keywords": [
+          "time series",
+          "temporal reasoning",
+          "irregular time series",
+          "survival analysis",
+          "event sequence",
+          "longitudinal modeling",
+          "time-aware",
+          "temporal abstraction",
+          "visit-level modeling"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "11-数据集、基准与评测",
-        "keywords": ["MIMIC", "eICU", "PhysioNet", "UK Biobank", "benchmark", "dataset", "evaluation", "leaderboard", "cohort construction", "clinical benchmark"],
+        "name": "11-datasets-benchmarks-and-evaluation",
+        "keywords": [
+          "MIMIC",
+          "eICU",
+          "PhysioNet",
+          "UK Biobank",
+          "benchmark",
+          "dataset",
+          "evaluation",
+          "leaderboard",
+          "cohort construction",
+          "clinical benchmark"
+        ],
         "zotero_collection_id": null
       },
       {
-        "name": "12-综述与方法论",
-        "keywords": ["survey", "review", "benchmark", "tutorial", "综述"],
+        "name": "12-surveys-and-methodology",
+        "keywords": [
+          "survey",
+          "review",
+          "benchmark",
+          "tutorial",
+          "survey"
+        ],
         "zotero_collection_id": null
       }
     ]

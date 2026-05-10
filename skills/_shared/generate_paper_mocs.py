@@ -19,8 +19,8 @@ def main() -> int:
     summary = build_tree_mocs(
         vault_root=obsidian_vault_path(),
         root_dir=paper_notes_dir(),
-        title_prefix="论文目录页",
-        intro="用于浏览论文笔记、分类目录和子主题入口。",
+        title_prefix="Paper Index",
+        intro="Use this page to browse paper notes, category directories, and subtopic entry points.",
         exclude_dir_names={paths_config()["concepts_folder"]},
     )
     print(json.dumps(summary.to_dict(), ensure_ascii=False, indent=2))

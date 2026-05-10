@@ -996,7 +996,7 @@ def load_fallback_ids(days: int = 7) -> set[str]:
     ids: set[str] = set()
     today = datetime.now().date()
     for day in range(1, days + 1):
-        fpath = DAILYPAPERS_DIR / f"{(today - timedelta(days=day)).isoformat()}-论文推荐.md"
+        fpath = DAILYPAPERS_DIR / f"{(today - timedelta(days=day)).isoformat()}-paper-recommendations.md"
         if not fpath.exists():
             continue
         try:

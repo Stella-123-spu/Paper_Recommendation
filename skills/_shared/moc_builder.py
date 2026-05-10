@@ -136,47 +136,47 @@ def _build_moc_content(
     )
 
     lines = [
-        f"# {title_prefix}：{display_name}",
+        f"# {title_prefix}: {display_name}",
         "",
         intro,
         "",
     ]
 
     if directory == root_dir:
-        lines.append(f"- 根目录：`{root_dir}`")
+        lines.append(f"- Root directory: `{root_dir}`")
     else:
-        lines.append(f"- 当前目录：`{relative_dir.as_posix()}`")
+        lines.append(f"- Current directory: `{relative_dir.as_posix()}`")
     lines.append("")
 
     subdirs = _subdirs(directory, exclude_dir_names)
     notes = _note_files(directory)
 
     if subdirs:
-        lines.extend(["## 子目录", ""])
+        lines.extend(["## Subdirectories", ""])
         for subdir in subdirs:
             note_count = len(_note_files(subdir))
             child_count = len(_subdirs(subdir, exclude_dir_names))
             lines.append(
                 f"- [[{_wikilink(_moc_path(subdir), vault_root)}|{subdir.name}]]"
-                f" · {note_count} 篇笔记 · {child_count} 个子目录"
+                f" · {note_count} notes · {child_count} subdirectories"
             )
         lines.append("")
 
     if notes:
-        lines.extend(["## 当前目录笔记", ""])
+        lines.extend(["## Notes in This Directory", ""])
         for note in notes:
             lines.append(f"- [[{_wikilink(note, vault_root)}|{note.stem}]]")
         lines.append("")
 
     if not subdirs and not notes:
-        lines.extend(["## 当前目录笔记", "", "- 暂无内容", ""])
+        lines.extend(["## Notes in This Directory", "", "- No content yet", ""])
 
     lines.extend(
         [
-            "## 说明",
+            "## Explanation",
             "",
-            "- 这个目录页由脚本自动生成。",
-            "- 你手动新增、移动或重命名笔记后，可以再运行一次“更新索引”。",
+            "- This index page is generated automatically.",
+            "- After manually adding, moving, or renaming notes, run the index refresh again.",
             "",
         ]
     )

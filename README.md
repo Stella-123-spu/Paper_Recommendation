@@ -47,11 +47,8 @@ This is the shortest path for a non-technical researcher.
    - your Obsidian vault path
    - your folder names for daily papers, notes, and concepts
 7. In Codex, run one of:
-   - `今日论文推荐`
    - `today's paper recommendations`
-   - `过去3天论文推荐`
    - `paper recommendations from the last 3 days`
-   - `过去一周论文推荐`
    - `paper recommendations from the last week`
 8. Open Obsidian and check the outputs:
    - daily recommendation note
@@ -59,7 +56,7 @@ This is the shortest path for a non-technical researcher.
    - concept notes
    - refreshed indexes, if enabled
 
-Good first test: `过去3天论文推荐`.
+Good first test: `paper recommendations from the last 3 days`.
 
 Example prompt for Codex:
 
@@ -205,7 +202,7 @@ Key files:
 
 ## Roadmap
 
-- [ ] Add a full English version
+- [x] Add a full English version
 - [ ] Add a GUI to make the workflow more user friendly
 - [ ] Learn from user interactions over time
 

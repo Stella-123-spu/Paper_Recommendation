@@ -1,74 +1,53 @@
-# 笔记质量详细规范
+# Paper Note Quality Standards
 
-## 公式质量检查
+These standards define what a complete paper note must contain. They are stricter than a normal summary because the note should be useful for future research work.
 
-> 教训（DreamerV1 事件）: 公式不仅要"有"，还要"对"。
+## Zero-Omission Principle
 
-### 5 类必检公式错误
+Every paper note must include all important technical artifacts from the paper:
 
-| # | 错误类型 | 示例 | 检查方法 |
-|---|---------|------|---------|
-| 1 | **变量冲突** | $v(s_\tau) = \sum_\tau r_\tau$（$\tau$ 既是自由变量又是求和变量） | 确保 bound variable 和 free variable 不同名 |
-| 2 | **公式-文本不一致** | 文字说 "stop-gradient" 但公式里没写 $\operatorname{sg}(\cdot)$ | 文字描述的性质必须在公式中体现 |
-| 3 | **符号约定不一致** | 正文用 $p$ 表示后验，公式用 $q$ | 全文统一使用原论文符号约定 |
-| 4 | **上下标/求和范围错误** | $\sum_{n=1}^{H}$ 写成 $\sum_{n=1}^{H-1}$ | 逐字核对原论文 |
-| 5 | **缺少关键算子** | 省略 $\mathbb{E}$、$\nabla$、stop-gradient 等 | 确认所有算子完整 |
+- every figure
+- every formula
+- every table
+- the core algorithm or training/inference procedure
+- key baselines and evaluation metrics
 
-### Obsidian MathJax 适配
+Do not replace these with vague prose.
 
-1. **避免超长单行公式**（>80 字符拆分为 `aligned` 块）
-2. **`$$` 块前后必须有空行**（否则不渲染）
-3. 安全命令：`\operatorname{}`, `\text{}`, `\begin{aligned}`, `\underbrace{}`
-4. `\Big`, `\bigg` 优于 `\left`/`\right` 处理大括号嵌套
+## Figures
 
-### 公式自检清单
+**Every paper note must contain all figures from the paper. Do not omit any.**
 
-- [ ] 变量名与上下文一致？无冲突？
-- [ ] 文字描述的数学性质在公式中体现？
-- [ ] 求和/积分范围与原论文一致？
-- [ ] 长公式已拆分？
-- [ ] `$$` 前后有空行？
+For each figure:
 
-## 表格提取规范
+- include the image itself
+- include the figure number or title when available
+- explain what the figure shows
+- explain why it matters for the paper's claim
 
-**必须提取论文中的所有表格（ALL Tables）**，完整保留所有行列数据：
+## Formulas
 
-```markdown
-### Table X: {表格标题}
+Every central formula must include:
 
-| Method | Metric1 | Metric2 |
-|--------|---------|---------|
-| Baseline | 45.2 | 78.3 |
-| **Ours** | **52.1** | **85.6** |
+- a descriptive name linked to a concept when appropriate, such as `[[Contrastive Loss|Contrastive Loss]]`
+- a LaTeX `$$` block
+- an explanation of what the formula means
+- a symbol list
 
-**表格说明**: {关键发现}
-```
+Make sure there is a blank line before and after every `$$` block so Obsidian renders it.
 
-## 图片提取规范
+## Tables
 
-**每篇论文笔记必须包含所有 Figure**，一张都不能漏。
+All important tables must be preserved or summarized faithfully. If a table is too large, keep the key rows and columns and explain what was omitted.
 
-同时检查**项目主页**上的额外图片（如预训练流程图、消融可视化等）。
+## Self-Check
 
-每张图片必须包含：
-1. **标题** - `### Figure X: 英文标题 / 中文标题`
-2. **图片** - 外链优先（arXiv HTML、项目主页等），找不到再本地
-3. **说明** - 解释图片内容和关键信息
+**Zero omissions: all figures, all formulas, and all tables must appear in the note.**
 
-## 提取完整性自检清单
-
-**零遗漏原则：所有图、所有公式、所有表格必须全部出现在笔记中。**
-
-图片：
-- [ ] 论文有多少张 Figure？笔记中全部包含？
-- [ ] 外链 URL 对应正确 Figure？
-- [ ] 无外链的已下载到本地 `assets/` 并用 `![[]]` 嵌入？
-- [ ] 项目主页有额外图片？已补充？
-
-公式：
-- [ ] 论文有多少个公式？笔记中全部包含？
-- [ ] 变量名一致？无冲突？
-- [ ] 长公式已拆分适配 Obsidian？
-
-表格：
-- [ ] 论文有多少张 Table？笔记中全部包含？所有行完整？
+- [ ] How many figures are in the paper? Are all included in the note?
+- [ ] How many formulas are in the paper? Are all included in the note?
+- [ ] How many tables are in the paper? Are all included or faithfully summarized?
+- [ ] Are formulas named, explained, and rendered as LaTeX?
+- [ ] Are technical terms linked inline with `[[Concept]]` links?
+- [ ] Are all image links reachable or localized?
+- [ ] Does the note have enough detail to reconstruct the method without rereading the full paper?

@@ -1,49 +1,53 @@
-# 概念自动归类规则
+# Concept Categorization
 
-概念库位置：`{CONCEPTS_PATH}`
+Read the `paper_notes_taxonomy` section in `../_shared/user-config.json` first. **Directory names, keywords, priority, and Zotero mapping all come from that one config.**
 
-先读取 `../_shared/user-config.json` 中的 `paper_notes_taxonomy` 段。**目录名、关键词、优先级、Zotero 映射都以这一个配置为准。**
+## Categorization Rules
 
-工作规则：
+1. Run `ls {CONCEPTS_PATH}` to inspect existing subdirectories.
+2. Match concepts against `paper_notes_taxonomy.categories[*].keywords`.
+3. If a concept matches multiple categories, choose the earliest category in config order.
+4. If no category matches, use `concept_fallback_category` from config.
+5. Do not create ad hoc top-level categories unless the user explicitly requests a taxonomy change.
 
-1. 先用 `ls {CONCEPTS_PATH}` 查看已有子目录。
-2. 按 `paper_notes_taxonomy.categories` 中的顺序匹配。顺序越靠前，优先级越高。
-3. 如果一个概念同时命中多个分类，按配置顺序选最前面的那个。
-4. 只有完全无法判断时，才使用 `paper_notes_taxonomy.concept_fallback_category`。
-5. 如果要迁移到别的研究领域，只改 `user-config.json`，不要在这个文档里再补第二套规则。
+to quickly inspect the current taxonomy, open `../_shared/user-config.json` and check:
 
-需要快速查看当前分类时，直接打开 `../_shared/user-config.json`，看：
-
-- `paper_notes_taxonomy.categories[*].name`
-- `paper_notes_taxonomy.categories[*].keywords`
-- `paper_notes_taxonomy.fallback_category`
+- `paper_notes_taxonomy.categories[].name`
+- `paper_notes_taxonomy.categories[].keywords`
 - `paper_notes_taxonomy.concept_fallback_category`
 
-## 概念笔记模板
+## Concept Note Template
 
 ```markdown
 ---
 type: concept
-aliases: [中文别名, 英文别名]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+tags: [concept]
 ---
 
-# 概念名称
+# Concept Name
 
-## 定义
-{一句话定义}
+## Definition
 
-## 数学形式
-$$公式$$
+Explain the concept in 2-4 precise sentences.
 
-## 核心要点
-1. ...
-2. ...
+## Why It Matters
 
-## 代表工作
-- [[Paper1]]: ...
-- [[Paper2]]: ...
+Explain why this concept matters for the current shared-config domain.
 
-## 相关概念
-- [[相关概念1]]
-- [[相关概念2]]
+## Representative Works
+
+- [[Paper Note]]: one sentence explaining why the paper represents this concept.
+
+## Related Concepts
+
+- [[Related Concept]]:
 ```
+
+## Quality Requirements
+
+- Keep concept notes concise and reusable.
+- Link representative paper notes with `[[wikilinks]]`.
+- Avoid duplicating a whole paper summary inside a concept note.
+- Prefer the most specific category that matches the concept's primary use.

@@ -1,19 +1,19 @@
-# 共享领域术语表
+# Shared Terminology
 
-这个文件不再维护独立内容。
+This file is a lightweight entry point for terminology lookup.
 
-唯一术语来源是 `../../_shared/user-config.json` 里的：
+The active domain terminology lives in:
 
-- `domain.name`
-- `domain.summary`
-- `domain.focus_themes`
-- `domain.related_themes`
-- `domain.terminology`
+- `../_shared/user-config.json`
+- section: `domain.terminology`
 
-使用规则：
+Use that config as the source of truth for categories, aliases, and short definitions. Do not maintain a second terminology table here.
 
-1. 需要查术语、别名、定义时，直接读取共享配置里的 `domain.terminology`。
-2. 需要切换到别的研究领域时，只修改 `user-config.json`，不要在这里复制第二份术语表。
-3. 如果分析新论文时发现应该补充术语，也只更新 `user-config.json`。
+## Usage
 
-当前这个 Markdown 文件只保留为兼容入口，避免其他 skill 或人工习惯引用旧路径时读到过期内容。
+When creating notes:
+
+1. Check whether a term appears in `domain.terminology`.
+2. Use the configured English term as the canonical concept-note title.
+3. Use aliases for matching only; do not create duplicate concept notes for aliases.
+4. If a term is important but missing from the config, create a concept note under the best matching taxonomy category and consider updating config later.
