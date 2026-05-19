@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.sitongliu.daily-papers
+  Fires runner.sh every day at 9:00 local time.
+  The runner self-throttles internally to a ~3-day cadence — launchd just
+  provides the wakeup signal.
+
+  __HOME__ is replaced by install.sh at deploy time.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.sitongliu.daily-papers</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__HOME__/Library/Application Support/daily-papers/runner.sh</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>9</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Application Support/daily-papers/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Application Support/daily-papers/launchd.err.log</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>__HOME__</string>
+  </dict>
+</dict>
+</plist>

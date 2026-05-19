@@ -2,3 +2,9 @@
 __pycache__/
 *.pyc
 
+# Runtime mirror written by automation/launchd/runner.sh
+.status/
+
+# Legacy patched file (now lives in automation/launchd/runner.sh)
+runner.patched.sh
+
