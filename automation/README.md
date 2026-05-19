@@ -117,6 +117,56 @@ To register it as a Cowork artifact, open Cowork and ask:
 The artifact reads `Paper_Recommendation/.status/{last-run,runner.log}` via
 the vault MCP, so it stays live without any extra plumbing.
 
+### What the panel shows
+
+**Schedule card** — top-right badge reflects today:
+
+- `等待 fire` (muted) — no log entry for today yet (before 9am, or launchd hasn't fired)
+- `今天已 skip` (amber) — runner fired but the throttle blocked the real run
+- `今天已运行` (green) — `start:` / `end: rc=0` appeared in today's log
+
+Below the badge: last real run (epoch → local date), next real run (computed
+as `last + 66h` rounded up to the next 9am), and the most recent 8 log lines
+color-coded by event type.
+
+**Quick run** — four buttons:
+
+| Button                    | What it copies to clipboard                              |
+|---------------------------|----------------------------------------------------------|
+| 近 3 天论文推荐            | `paper recommendations from the last 3 days`             |
+| 编辑 user-config.json      | absolute path to `skills/_shared/user-config.json`        |
+| 查看 runner.log            | absolute path to `~/Library/.../daily-papers/runner.log` |
+| 打开 Obsidian Vault        | absolute path to `~/Documents/Obsidian/Research`         |
+
+**Conference paper search** — Venue dropdown (split into ML / Healthcare),
+Year, optional Topic query, and a healthcare-filter toggle for ML venues
+(auto-hidden for healthcare venues). The composed prompt is shown live
+beneath the form; clicking the button copies it to clipboard.
+
+### Why the buttons copy to clipboard instead of running directly
+
+Cowork artifacts execute in a sandboxed iframe with three injected APIs:
+`callMcpTool`, `askClaude`, `runScheduledTask`. There is no API to inject
+text into the chat input, and `<a href="computer://…">` navigation is
+blocked by the iframe's URL-scheme policy. So a button literally cannot
+"click and run" in the way the chat itself can.
+
+The clipboard model side-steps this: click → text in clipboard → paste
+where you actually want it (chat for prompts, Finder `⌘⇧G` for paths).
+The toast at the bottom of the artifact confirms each copy.
+
+Two alternatives exist if you ever decide the extra paste is worth more
+machinery:
+
+- **Cowork scheduled task + `runScheduledTask`** — works only for fixed
+  prompts (i.e., the 3-day recommendation, not conference search where
+  venue/year/topic are dynamic). Adds a "permanently disabled" entry to
+  your scheduled tasks list.
+- **A local shell MCP** that exposes a `run` tool over your real Mac shell.
+  True one-click for everything, but you'd install + connect the MCP on
+  every machine, and any button click would run arbitrary commands locally —
+  worth thinking carefully about before adding that surface.
+
 ## Verifying after install
 
 ```bash
