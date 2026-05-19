@@ -4,7 +4,7 @@ Paper Reading Daemon - background paper-reading daemon
 
 Features:
 1. Gets the paper list for a specified Zotero collection, recursively including child collections
-2. Calls Codex to process papers one by one
+2. Calls Claude Code (`claude -p`) to process papers one by one
 3. Automatically waits and retries on rate limits
 4. Supports resume from checkpoints
 
@@ -44,11 +44,11 @@ ZOTERO_STORAGE = str(zotero_storage_dir())
 OBSIDIAN_VAULT = str(obsidian_vault_path())
 PAPER_NOTES_ROOT = str(paper_notes_dir())
 CONCEPTS_ROOT = str(concepts_dir())
-_DAEMON_STATE_DIR = os.path.expanduser(os.environ.get("PAPER_DAEMON_STATE_DIR", "~/.codex"))
-_CODEX_BIN = os.environ.get("PAPER_DAEMON_CODEX_BIN", "codex")
-_CODEX_WORKDIR = os.environ.get("PAPER_DAEMON_CODEX_WORKDIR", OBSIDIAN_VAULT)
-_CODEX_MODEL = os.environ.get("PAPER_DAEMON_CODEX_MODEL", "").strip()
-_CODEX_EXTRA_ARGS = os.environ.get("PAPER_DAEMON_CODEX_ARGS", "")
+_DAEMON_STATE_DIR = os.path.expanduser(os.environ.get("PAPER_DAEMON_STATE_DIR", "~/.claude"))
+_CLAUDE_BIN = os.environ.get("PAPER_DAEMON_CLAUDE_BIN", "claude")
+_CLAUDE_WORKDIR = os.environ.get("PAPER_DAEMON_CLAUDE_WORKDIR", OBSIDIAN_VAULT)
+_CLAUDE_MODEL = os.environ.get("PAPER_DAEMON_CLAUDE_MODEL", "").strip()
+_CLAUDE_EXTRA_ARGS = os.environ.get("PAPER_DAEMON_CLAUDE_ARGS", "")
 PROGRESS_FILE = os.path.join(_DAEMON_STATE_DIR, "paper_daemon_progress.json")
 LOG_FILE = os.path.join(_DAEMON_STATE_DIR, "paper_daemon.log")
 PID_FILE = os.path.join(_DAEMON_STATE_DIR, "paper_daemon.pid")
@@ -423,9 +423,9 @@ def save_progress(progress: dict):
         json.dump(progress, f, indent=2, ensure_ascii=False)
 
 
-def call_codex(paper_source: dict, collection_path: str, item_id: int) -> tuple[bool, str]:
+def call_claude(paper_source: dict, collection_path: str, item_id: int) -> tuple[bool, str]:
     """
-    Call Codex to process a paper
+    Call Claude Code (`claude -p`) to process a paper
 
     paper_source can include:
     - pdf_path: local PDF path
@@ -594,23 +594,21 @@ Start directly without confirmation. Extract every formula, figure, and table.""
 
     try:
         cmd = [
-            _CODEX_BIN,
-            'exec',
-            '--full-auto',
-            '--skip-git-repo-check',
-            '-C',
-            _CODEX_WORKDIR,
+            _CLAUDE_BIN,
+            '-p',
+            '--dangerously-skip-permissions',
         ]
-        if _CODEX_MODEL:
-            cmd.extend(['--model', _CODEX_MODEL])
-        if _CODEX_EXTRA_ARGS:
-            cmd.extend(shlex.split(_CODEX_EXTRA_ARGS))
+        if _CLAUDE_MODEL:
+            cmd.extend(['--model', _CLAUDE_MODEL])
+        if _CLAUDE_EXTRA_ARGS:
+            cmd.extend(shlex.split(_CLAUDE_EXTRA_ARGS))
         cmd.append(prompt)
 
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
+            cwd=_CLAUDE_WORKDIR,
             timeout=900  # 15-minute timeout because image extraction can take time
         )
 
@@ -709,7 +707,7 @@ def process_collection(collection_name: str, resume: bool = True):
         progress['current'] = {'item_id': item_id, 'title': title}
         save_progress(progress)
 
-        success, error = call_codex(paper_source, collection_path, item_id)
+        success, error = call_claude(paper_source, collection_path, item_id)
 
         if success:
             logger.info(f"✓ Done: {title[:50]}")
@@ -811,7 +809,7 @@ def main():
 
     # Check whether another process is running
     if not acquire_lock():
-        logger.error("Another paper_daemon process is running. Stop it first or delete ~/.codex/paper_daemon.pid")
+        logger.error("Another paper_daemon process is running. Stop it first or delete ~/.claude/paper_daemon.pid")
         return
 
     try:

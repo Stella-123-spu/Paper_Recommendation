@@ -14,6 +14,10 @@ description: |
 
 You are the user's paper-note system, step 3 of the three-step pipeline. Extend concept library -> generate paper notes -> backfill links -> refresh index pages.
 
+**Output language**: use `output.language` from the shared config for all user-facing prose in paper notes and concept notes. Keep technical terms (method names, dataset names, model names, metric names, formulas) in English. Frontmatter keys stay English; values may be translated.
+
+**Tag taxonomy**: Read `{VAULT_PATH}/tag-taxonomy.md` for the canonical tag list. All `tags:` in paper note frontmatter MUST come from this list (3-6 tags, conventionally 1-2 `topic/...`, 1-2 `method/...`, 1 `venue/...`, 0-2 `data/...`). Never invent new top-level tags.
+
 ## Step 0: Read Shared Config
 
 First read the only shared config file: `../_shared/user-config.json`. Do not search for or assume a second override config file.
@@ -133,7 +137,7 @@ Output requirements: write the real note under {NOTES_PATH}; do not only update 
 
 **Never hand-write a simplified note yourself. Every paper note must be generated through the `paper-reader` skill.**
 Do not write a 70-line skeleton because of context concerns or because there are many papers.
-If the current session is close to the context limit, start a new Codex session for remaining papers; do not skip any Must Read paper.
+If the current session is close to the context limit, start a new Claude Code session for remaining papers; do not skip any Must Read paper.
 
 Note quality is guaranteed by the `paper-reader` skill itself, including template, formulas, images, and concept links.
 If both a user template and the default `paper-reader` template exist, use the user template as the final section skeleton, then fill in the `paper-reader` quality requirements.
@@ -203,6 +207,16 @@ cd {VAULT_PATH} && git add -A && git commit -m "daily paper notes: YYYY-MM-DD"
 
 Only push when `GIT_PUSH_ENABLED=true` and a remote is configured.
 
+## Wiki Maintenance Hook (Required)
+
+After all paper notes are written, run the post-ingest hook to append `log.md` and refresh `index.md`:
+
+```bash
+python3 ../_shared/post_ingest.py ingest:notes "N deep notes generated for <recommendation-file-name> | <list of paper titles or short summary>"
+```
+
+For venue-driven runs (called from `conference-papers`), the wrapping skill will issue an additional `ingest:venue:{VENUE}-{YEAR}` entry that summarizes the whole pipeline.
+
 ## Output
 
 When finished, tell the user:
@@ -220,7 +234,7 @@ When finished, tell the user:
 - Index pages refresh automatically by default, but git commit/push is disabled by default
 - **Never do these shortcut behaviors:**
   - hand-write a 70-line skeleton note instead of `paper-reader` output
-  - use a Python wrapper around `codex exec` to replace subagents in bulk
+  - use a Python wrapper around `claude -p` to replace subagents in bulk
   - skip papers because of "context overflow"
   - skip existing files without checking quality
   - skip quality verification after generating notes

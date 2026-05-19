@@ -1,6 +1,6 @@
 {
   "paths": {
-    "obsidian_vault": "/Users/zengsh_agent/Obsidian/zengsh's Obsidian",
+    "obsidian_vault": "/Users/sitongliu/Documents/Obsidian/Research",
     "paper_notes_folder": "PaperNotes",
     "daily_papers_folder": "DailyPapers",
     "concepts_folder": "_concepts",
@@ -10,16 +10,17 @@
   },
   "domain": {
     "name": "Healthcare AI",
-    "summary": "AI for healthcare with emphasis on patient trajectory modeling, longitudinal EHR modeling, clinical foundation models, clinical LLMs, medical world models, temporal reasoning, multimodal clinical modeling, causal/intervention modeling, and agentic decision-making for healthcare.",
+    "summary": "AI for healthcare with emphasis on patient trajectory modeling, clinical foundation models, clinical LLMs, medical world models, temporal reasoning, multimodal clinical modeling, multimodal medical imaging, explainable and interpretable clinical AI, causal/intervention modeling, and agentic decision-making for healthcare.",
     "focus_themes": [
       "AI for healthcare",
       "Patient trajectory modeling",
-      "Longitudinal EHR modeling",
       "Clinical foundation models",
       "Clinical LLM",
       "Medical world models",
       "Temporal reasoning",
       "Multimodal clinical modeling",
+      "Multimodal medical imaging",
+      "Explainable healthcare AI",
       "Causal / intervention modeling",
       "Agentic decision-making for healthcare"
     ],
@@ -65,13 +66,6 @@
               "patient journey modeling"
             ],
             "summary": "Models repeated visits, events, tests, treatments, and outcomes as a continuously evolving patient process."
-          },
-          {
-            "term": "Longitudinal EHR modeling",
-            "aliases": [
-              "longitudinal patient modeling"
-            ],
-            "summary": "Learns representations, predictions, or generations from longitudinal electronic health record sequences."
           },
           {
             "term": "Temporal reasoning",
@@ -330,8 +324,16 @@
       "ai for healthcare",
       "clinical ai",
       "patient trajectory modeling",
-      "longitudinal ehr modeling",
       "patient representation learning",
+      "multimodal medical image",
+      "medical imaging",
+      "medical image",
+      "explainable healthcare",
+      "explainable medical",
+      "explainable clinical",
+      "interpretable healthcare",
+      "interpretable medical",
+      "interpretable clinical",
       "virtual patient",
       "virtual patient representation",
       "multimodal patient modeling",
@@ -397,7 +399,14 @@
       "retrieval",
       "question answering",
       "prognosis",
-      "biomarker"
+      "biomarker",
+      "medical image",
+      "imaging",
+      "radiology",
+      "explainable",
+      "interpretable",
+      "explainability",
+      "interpretability"
     ],
     "arxiv_categories": [
       "cs.CL",
@@ -603,6 +612,10 @@
         "zotero_collection_id": null
       }
     ]
+  },
+  "output": {
+    "language": "zh-CN",
+    "language_notes": "All user-facing prose written by review/notes skills (recommendation files, sharp reviews, paper notes, concept notes) should be in this language. Keep technical terms (model names, dataset names, metric names, English citations) in English. Frontmatter keys stay English; values may be translated."
   },
   "automation": {
     "auto_refresh_indexes": true,

@@ -1,12 +1,12 @@
 # Daily Paper Recommendation Skills
 
-[![Codex Skills](https://img.shields.io/badge/Codex-Skills-black)](#overview)
+[![Claude Code Skills](https://img.shields.io/badge/Claude%20Code-Skills-black)](#overview)
 [![Obsidian](https://img.shields.io/badge/Obsidian-Native-7C3AED)](#quick-start)
 [![Focus](https://img.shields.io/badge/Focus-Healthcare%20AI-0F766E)](#adapt-to-your-domain)
 [![Pipeline](https://img.shields.io/badge/Pipeline-3%20Stages-2563EB)](#overview)
 [![Sources](https://img.shields.io/badge/Sources-6-orange)](#sources)
 
-A Codex-first workflow for discovering, ranking, reviewing, and note-taking on new papers inside **Obsidian**.
+A Claude Code-first workflow for discovering, ranking, reviewing, and note-taking on new papers inside **Obsidian**.
 
 Default preset: **Healthcare AI**.  
 Core idea: one prompt triggers a full paper pipeline:
@@ -30,23 +30,22 @@ Core idea: one prompt triggers a full paper pipeline:
 
 This is the shortest path for a non-technical researcher.
 
-1. Install **Codex** on your machine.
-   If you prefer, you can also use **Claude Code** to help edit the config, but this project is designed to run most naturally with Codex.
-2. Download this repository and open it in Codex.
+1. Install **Claude Code** on your machine (`claude` CLI).
+2. Download this repository and open it in Claude Code.
 3. Make sure you have an **Obsidian vault** for your research.
-4. Install these skill folders into `~/.codex/skills/`:
+4. Install these skill folders into `~/.claude/skills/`:
    - `skills/_shared`
    - `skills/daily-papers`
    - `skills/daily-papers-fetch`
    - `skills/daily-papers-review`
    - `skills/daily-papers-notes`
    - `skills/paper-reader`
-5. Best practice: create **symbolic links** from this repo into `~/.codex/skills/` so the repo and installed skills stay synced automatically.
-6. Open `skills/_shared/user-config.json` and ask Codex to adapt it to:
+5. Best practice: create **symbolic links** from this repo into `~/.claude/skills/` so the repo and installed skills stay synced automatically.
+6. Open `skills/_shared/user-config.json` and ask Claude Code to adapt it to:
    - your research domain
    - your Obsidian vault path
    - your folder names for daily papers, notes, and concepts
-7. In Codex, run one of:
+7. In Claude Code, run one of:
    - `today's paper recommendations`
    - `paper recommendations from the last 3 days`
    - `paper recommendations from the last week`
@@ -58,7 +57,7 @@ This is the shortest path for a non-technical researcher.
 
 Good first test: `paper recommendations from the last 3 days`.
 
-Example prompt for Codex:
+Example prompt for Claude Code:
 
 > Update `skills/_shared/user-config.json` for my setup. My research domain is computational neuroscience. My Obsidian vault is at `/path/to/my/vault`. Please rewrite the domain description, focus themes, related themes, exclusions, ranking keywords, arXiv categories, note taxonomy, and Obsidian folder paths. Keep the pipeline structure unchanged.
 
@@ -95,7 +94,7 @@ What usually stays the same:
 
 Practical advice:
 
-- Ask Codex or Claude Code to rewrite `user-config.json` for your field.
+- Ask Claude Code to rewrite `user-config.json` for your field.
 - Test with a 1-day or 3-day run.
 - Tighten keywords and exclusions if results are noisy.
 
@@ -209,5 +208,5 @@ Key files:
 
 ## Notes
 
-- The corresponding skill folders under `~/.codex/skills/` should be linked to this repo for live sync.
+- The corresponding skill folders under `~/.claude/skills/` should be linked to this repo for live sync.
 - This repo is derived from [huangkiki/dailypaper-skills](https://github.com/huangkiki/dailypaper-skills), with substantial local adaptation for multi-source retrieval, Obsidian integration, and healthcare-focused ranking.

@@ -134,8 +134,8 @@ After completion, verify `/tmp/daily_papers_enriched.json` exists and contains a
 
 ## Notes
 
-- Phase 1+2 uses `fetch_and_score.py` and is run directly by the current Codex session, with zero model-token cost
-- Phase 3 uses `enrich_papers.py` and is also run directly by the current Codex session
+- Phase 1+2 uses `fetch_and_score.py` and is run directly by the current Claude Code session, with zero model-token cost
+- Phase 3 uses `enrich_papers.py` and is also run directly by the current Claude Code session
 - If a script fails, inspect stderr for diagnostics
 - If arXiv API fetching fails, the script automatically falls back to Hugging Face-only sources
 - If medRxiv fetching fails through Python SSL, the script automatically falls back to `curl`

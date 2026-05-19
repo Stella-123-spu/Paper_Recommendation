@@ -18,6 +18,8 @@ You are the user's paper review system, step 2 of the three-step pipeline. Read 
 
 First read the only shared config file: `../_shared/user-config.json`. Do not search for or assume a second override config file.
 
+**Output language**: use `output.language` from the shared config for all user-facing prose (opening summary, triage-table reasons, sharp reviews, closing trend judgment). Keep technical terms (method names, dataset names, model names, metric names) in English. Frontmatter keys stay English; values may be translated.
+
 Explicitly create and use these variables throughout the rest of the workflow:
 
 - `VAULT_PATH`
@@ -59,7 +61,7 @@ Use only the variables above in later steps. Do not define another theme or keyw
 
 ### Phase 4: Scan Obsidian Note Index + Match Existing Paper Notes
 
-The current Codex session should do this directly with Glob and Read tools:
+The current Claude Code session should do this directly with Glob and Read tools:
 
 1. Scan all category directories under `{NOTES_PATH}/`, skipping directories that start with `_` except `_inbox`, and list the `.md` file names under each category.
 2. Scan all topic directories under `{CONCEPTS_PATH}/` and list concept notes under each topic.
@@ -79,7 +81,7 @@ The current Codex session should do this directly with Glob and Read tools:
 
 ### Phase 5: Sharp Review
 
-**The current Codex session is the reviewer.**
+**The current Claude Code session is the reviewer.**
 
 Generate reviews directly from enriched paper data plus the note-library index.
 
@@ -254,7 +256,15 @@ After saving, run:
      4. Verify `(new today) + (re-recommended) >= number of papers in the recommendation file`
      5. If it does not match, rescan the recommendation file and fill missing entries
 
-2. **Optional git automation**:
+2. **Wiki maintenance hook (required)** — append to `log.md` and refresh `index.md`:
+
+```bash
+python3 ../_shared/post_ingest.py review "<recommendation-file-name> | N_papers recommended (M must / W worth / S skip) | <DOMAIN_NAME>"
+```
+
+For multi-day daily runs, include the day window in the details. For venue-driven runs (`conference-papers`), the operation tag is set by the calling skill instead (e.g. `ingest:venue:NeurIPS-2024`).
+
+3. **Optional git automation**:
 
 Run only when `GIT_COMMIT_ENABLED=true`, and check in this order:
 

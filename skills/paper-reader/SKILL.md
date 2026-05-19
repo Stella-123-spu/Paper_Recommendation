@@ -23,6 +23,8 @@ Default to the current research domain in the shared config, with Zotero integra
 
 First read the only shared config file: `../_shared/user-config.json`. Do not search for or assume a second override config file.
 
+**Tag taxonomy**: Read `{VAULT_PATH}/tag-taxonomy.md` to get the canonical tag list. All `tags:` in the generated paper note frontmatter MUST come from this list (3-6 tags total, conventionally 1-2 `topic/...`, 1-2 `method/...`, 1 `venue/...`, 0-2 `data/...`). Never invent new top-level tags. If no tag fits and you genuinely need a new one, surface this to the user; do not silently add.
+
 Explicitly create and use these variables throughout the rest of the workflow:
 
 - `VAULT_PATH`
@@ -209,6 +211,16 @@ Concept library location: `{CONCEPTS_PATH}`.
 
 After analysis, ask whether the user wants a deeper explanation, comparison with other papers, or saving to Obsidian.
 After saving, automatically create missing concept notes and report how many concepts were added.
+
+## 7b. Wiki Maintenance Hook (Required when a note is saved)
+
+After saving a new paper note (and any concept notes), call the post-ingest hook to append `log.md` and refresh `index.md`:
+
+```bash
+python3 ../_shared/post_ingest.py ingest:paper "<paper-title> | <new-note-path>"
+```
+
+Skip this only when the skill was invoked as a single-paper executor *by* `daily-papers-notes` (the parent skill issues a batch summary). In that case the parent's hook is enough.
 
 ## 8. Batch processing
 
