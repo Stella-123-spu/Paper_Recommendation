@@ -19,6 +19,7 @@ Core idea: one prompt triggers a full paper pipeline:
 
 - [Quick Start](#quick-start)
 - [Automation (optional)](#automation-optional)
+- [Setting up on a new computer](#setting-up-on-a-new-computer)
 - [Adapt to Your Domain](#adapt-to-your-domain)
 - [Overview](#overview)
 - [Sources](#sources)
@@ -84,6 +85,142 @@ cd automation
 Full setup, override knobs, and troubleshooting live in
 [`automation/README.md`](automation/README.md). The automation is fully
 optional — without it, the skills still work as on-demand prompts.
+
+## Setting up on a new computer
+
+End-to-end walkthrough for a fresh Mac. Copy-paste from top to bottom.
+
+### 1. Prerequisites
+
+```bash
+# macOS ships with these — just sanity-check
+python3 --version        # any 3.10+ is fine
+git --version
+
+# Claude Code CLI
+# Install instructions: https://docs.claude.com/claude-code
+which claude || echo "install claude CLI first"
+
+# Obsidian — create or restore your vault at ~/Documents/Obsidian/Research
+# (or any path; you'll set the actual path in step 4)
+```
+
+### 2. Authenticate to GitHub (SSH)
+
+```bash
+ssh -T git@github.com
+# Expected: "Hi <your-username>! You've successfully authenticated..."
+```
+
+If that fails with `Permission denied`, generate a key and add it to your
+GitHub account:
+
+```bash
+ssh-keygen -t ed25519 -C "your-email@example.com"
+cat ~/.ssh/id_ed25519.pub
+# → paste into https://github.com/settings/keys → New SSH key
+```
+
+### 3. Clone the repo
+
+```bash
+mkdir -p ~/Documents
+cd ~/Documents
+git clone git@github.com:<your-github>/Paper_Recommendation.git
+cd Paper_Recommendation
+```
+
+> Replace `<your-github>` with your actual GitHub username (e.g. `Stella-123-spu`).
+
+### 4. Symlink the skills into Claude Code
+
+Linking (not copying) keeps the installed skills in sync with the repo —
+any future `git pull` is picked up automatically.
+
+```bash
+mkdir -p ~/.claude/skills
+for d in _shared daily-papers daily-papers-fetch daily-papers-review \
+         daily-papers-notes paper-reader conference-papers; do
+  ln -snf "$PWD/skills/$d" "$HOME/.claude/skills/$d"
+done
+ls -la ~/.claude/skills/ | grep "$USER"
+```
+
+### 5. Point user-config.json at THIS Mac's paths
+
+The repo-level `user-config.json` may still hold the previous Mac's
+absolute paths. Update at minimum:
+
+- `paths.obsidian_vault` → the actual vault path on this Mac
+- `paths.zotero_db` / `paths.zotero_storage` if you use the Zotero hook
+
+Everything else (domain, ranking, taxonomy) is identical across machines —
+leave it alone unless you're switching domains.
+
+### 6. Smoke-test the on-demand path
+
+Open Claude Code in the repo and run:
+
+```
+paper recommendations from the last 3 days
+```
+
+If a recommendation file appears in your Obsidian vault under
+`DailyPapers/`, the skill side of the install is healthy.
+
+### 7. Install the scheduled automation (optional)
+
+```bash
+cd automation
+./install.sh
+```
+
+The installer is idempotent — safe to re-run after edits. It:
+
+- creates `~/Library/Application Support/daily-papers/` and `.status/`
+- substitutes `__HOME__` → your real `$HOME` in the plists
+- loads both launchd jobs (daily-papers + backfill-stubs)
+- seeds `last-run` to "now" so the first 9am fire after install is a
+  benign skip (no surprise Claude API spend)
+
+Verify:
+
+```bash
+launchctl list | grep sitongliu
+# Expected:
+#   -   0   com.sitongliu.daily-papers
+#   -   0   com.sitongliu.backfill-stubs
+```
+
+See [`automation/README.md`](automation/README.md) for env-var overrides
+(`PAPER_REC_PATH`, `OBSIDIAN_VAULT`, `CLAUDE_BIN`) if your layout differs.
+
+### 8. Register the Cowork monitor artifact (optional)
+
+If you use Cowork, open it and ask Claude:
+
+> Create a Cowork artifact from
+> `~/Library/Application Support/daily-papers/paper-pipeline-monitor.html`,
+> id `paper-pipeline-monitor`.
+
+The artifact will show next/last real run, today's status badge, a
+conference-paper search form, and quick paths to `user-config.json` and
+`runner.log`. UI behavior and design rationale: see
+[`automation/README.md`](automation/README.md#cowork-monitor).
+
+### 9. First real run
+
+If you don't want to wait three days for the first scheduled run, force it:
+
+```bash
+echo $(($(date +%s) - 72*3600)) \
+  > "$HOME/Library/Application Support/daily-papers/last-run"
+"$HOME/Library/Application Support/daily-papers/runner.sh"
+tail "$HOME/Library/Application Support/daily-papers/runner.log"
+```
+
+You should see a `start:` line followed by Claude's output and an `end: rc=0`,
+and a new recommendation file in your Obsidian vault.
 
 ## Adapt to Your Domain
 
